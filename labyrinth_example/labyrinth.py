@@ -158,7 +158,7 @@ def run_labyrinth():
     #
     #
 
-    plot = geometry.plot(basis='xy',  color_by='material', openmc_exec='/Users/lorencalleri/openmc/build/install/bin/openmc')
+    plot = geometry.plot(basis='xy',  color_by='material')
     plot.figure.savefig('geometry_top_down_view.png', bbox_inches="tight")
 
     #
