@@ -1,0 +1,253 @@
+<?xml version='1.0' encoding='utf-8'?>
+<model>
+  <materials>
+    <material id="1" name="Compound">
+      <density units="g/cm3" value="6.536"/>
+      <nuclide ao="0.14597726196" name="H1"/>
+      <nuclide ao="2.2738039999999998e-05" name="H2"/>
+      <nuclide ao="7.96764e-06" name="B10"/>
+      <nuclide ao="3.223236e-05" name="B11"/>
+      <nuclide ao="0.000804982508" name="C12"/>
+      <nuclide ao="9.017492e-06" name="C13"/>
+      <nuclide ao="0.00216205129" name="N14"/>
+      <nuclide ao="7.94871e-06" name="N15"/>
+      <nuclide ao="0.07272654174" name="O16"/>
+      <nuclide ao="2.7629100000000003e-05" name="O17"/>
+      <nuclide ao="0.00014582916" name="O18"/>
+      <nuclide ao="0.000804" name="Al27"/>
+      <nuclide ao="0.007129354264" name="Si28"/>
+      <nuclide ao="0.000362008268" name="Si29"/>
+      <nuclide ao="0.00023863746799999999" name="Si30"/>
+      <nuclide ao="0.00035" name="P31"/>
+      <nuclide ao="9.69415548e-05" name="S32"/>
+      <nuclide ao="7.636638000000001e-07" name="S33"/>
+      <nuclide ao="4.2799098e-06" name="S34"/>
+      <nuclide ao="1.4871599999999999e-08" name="S36"/>
+      <nuclide ao="5.17582455e-06" name="K39"/>
+      <nuclide ao="6.4935e-10" name="K40"/>
+      <nuclide ao="3.735261e-07" name="K41"/>
+      <nuclide ao="0.00011220000000000002" name="Ti46"/>
+      <nuclide ao="0.000101184" name="Ti47"/>
+      <nuclide ao="0.001002592" name="Ti48"/>
+      <nuclide ao="7.3576e-05" name="Ti49"/>
+      <nuclide ao="7.0448e-05" name="Ti50"/>
+      <nuclide ao="0.0063437" name="Cr50"/>
+      <nuclide ao="0.12233194" name="Cr52"/>
+      <nuclide ao="0.013871459999999999" name="Cr53"/>
+      <nuclide ao="0.0034529" name="Cr54"/>
+      <nuclide ao="0.0142" name="Mn55"/>
+      <nuclide ao="0.029400350000000002" name="Fe54"/>
+      <nuclide ao="0.46152262" name="Fe56"/>
+      <nuclide ao="0.010658570000000001" name="Fe57"/>
+      <nuclide ao="0.00141846" name="Fe58"/>
+      <nuclide ao="0.000368" name="Co59"/>
+      <nuclide ao="0.061677671399999995" name="Ni58"/>
+      <nuclide ao="0.0237581286" name="Ni60"/>
+      <nuclide ao="0.0010327494" name="Ni61"/>
+      <nuclide ao="0.003292857" name="Ni62"/>
+      <nuclide ao="0.0008385936" name="Ni64"/>
+      <nuclide ao="0.0014175750000000001" name="Cu63"/>
+      <nuclide ao="0.000632425" name="Cu65"/>
+      <nuclide ao="4.89804e-06" name="Zr90"/>
+      <nuclide ao="1.068144e-06" name="Zr91"/>
+      <nuclide ao="1.6326800000000001e-06" name="Zr92"/>
+      <nuclide ao="1.6545760000000002e-06" name="Zr94"/>
+      <nuclide ao="2.6656e-07" name="Zr96"/>
+      <nuclide ao="4.67e-05" name="Nb93"/>
+      <nuclide ao="0.001655337" name="Mo92"/>
+      <nuclide ao="0.0010381309999999999" name="Mo94"/>
+      <nuclide ao="0.001793649" name="Mo95"/>
+      <nuclide ao="0.0018840489999999998" name="Mo96"/>
+      <nuclide ao="0.001082766" name="Mo97"/>
+      <nuclide ao="0.002744996" name="Mo98"/>
+      <nuclide ao="0.0011010719999999998" name="Mo100"/>
+      <nuclide ao="7.0907e-08" name="Sn112"/>
+      <nuclide ao="4.8246e-08" name="Sn114"/>
+      <nuclide ao="2.4854e-08" name="Sn115"/>
+      <nuclide ao="1.0628740000000002e-06" name="Sn116"/>
+      <nuclide ao="5.614079999999999e-07" name="Sn117"/>
+      <nuclide ao="1.7704820000000002e-06" name="Sn118"/>
+      <nuclide ao="6.27929e-07" name="Sn119"/>
+      <nuclide ao="2.381598e-06" name="Sn120"/>
+      <nuclide ao="3.3845300000000005e-07" name="Sn122"/>
+      <nuclide ao="4.23249e-07" name="Sn124"/>
+      <nuclide ao="2.8824000000000003e-09" name="Ta180"/>
+      <nuclide ao="2.39971176e-05" name="Ta181"/>
+      <nuclide ao="2.8319999999999997e-09" name="W180"/>
+      <nuclide ao="6.254e-07" name="W182"/>
+      <nuclide ao="3.37716e-07" name="W183"/>
+      <nuclide ao="7.23104e-07" name="W184"/>
+      <nuclide ao="6.70948e-07" name="W186"/>
+      <nuclide ao="2.352e-08" name="Pb204"/>
+      <nuclide ao="4.0488e-07" name="Pb206"/>
+      <nuclide ao="3.7128000000000003e-07" name="Pb207"/>
+      <nuclide ao="8.803200000000001e-07" name="Pb208"/>
+      <nuclide ao="1.66e-06" name="Bi209"/>
+    </material>
+    <material id="2" name="Steel">
+      <density units="g/cm3" value="7.93"/>
+      <nuclide ao="1.018748e-05" name="B10"/>
+      <nuclide ao="4.121252e-05" name="B11"/>
+      <nuclide ao="0.00102847888" name="C12"/>
+      <nuclide ao="1.1521119999999999e-05" name="C13"/>
+      <nuclide ao="0.00276981686" name="N14"/>
+      <nuclide ao="1.018314e-05" name="N15"/>
+      <nuclide ao="6.933463169999999e-05" name="O16"/>
+      <nuclide ao="2.6340499999999997e-08" name="O17"/>
+      <nuclide ao="1.3902779999999998e-07" name="O18"/>
+      <nuclide ao="0.00103" name="Al27"/>
+      <nuclide ao="0.009121515352" name="Si28"/>
+      <nuclide ao="0.000463164524" name="Si29"/>
+      <nuclide ao="0.000305320124" name="Si30"/>
+      <nuclide ao="0.000448" name="P31"/>
+      <nuclide ao="0.000123552962" name="S32"/>
+      <nuclide ao="9.73297e-07" name="S33"/>
+      <nuclide ao="5.454786999999999e-06" name="S34"/>
+      <nuclide ao="1.8954e-08" name="S36"/>
+      <nuclide ao="6.6213251e-06" name="K39"/>
+      <nuclide ao="8.306999999999999e-10" name="K40"/>
+      <nuclide ao="4.778442e-07" name="K41"/>
+      <nuclide ao="0.00014355000000000002" name="Ti46"/>
+      <nuclide ao="0.000129456" name="Ti47"/>
+      <nuclide ao="0.001282728" name="Ti48"/>
+      <nuclide ao="9.4134e-05" name="Ti49"/>
+      <nuclide ao="9.0132e-05" name="Ti50"/>
+      <nuclide ao="0.008125150000000001" name="Cr50"/>
+      <nuclide ao="0.15668543000000001" name="Cr52"/>
+      <nuclide ao="0.01776687" name="Cr53"/>
+      <nuclide ao="0.00442255" name="Cr54"/>
+      <nuclide ao="0.0182" name="Mn55"/>
+      <nuclide ao="0.0376418" name="Fe54"/>
+      <nuclide ao="0.59089576" name="Fe56"/>
+      <nuclide ao="0.013646360000000001" name="Fe57"/>
+      <nuclide ao="0.00181608" name="Fe58"/>
+      <nuclide ao="0.000471" name="Co59"/>
+      <nuclide ao="0.078969204" name="Ni58"/>
+      <nuclide ao="0.030418796" name="Ni60"/>
+      <nuclide ao="0.001322284" name="Ni61"/>
+      <nuclide ao="0.004216020000000001" name="Ni62"/>
+      <nuclide ao="0.001073696" name="Ni64"/>
+      <nuclide ao="0.00181173" name="Cu63"/>
+      <nuclide ao="0.0008082699999999999" name="Cu65"/>
+      <nuclide ao="6.276899999999999e-06" name="Zr90"/>
+      <nuclide ao="1.36884e-06" name="Zr91"/>
+      <nuclide ao="2.0923000000000003e-06" name="Zr92"/>
+      <nuclide ao="2.1203600000000002e-06" name="Zr94"/>
+      <nuclide ao="3.416e-07" name="Zr96"/>
+      <nuclide ao="5.98e-05" name="Nb93"/>
+      <nuclide ao="0.0021241050000000003" name="Mo92"/>
+      <nuclide ao="0.001332115" name="Mo94"/>
+      <nuclide ao="0.002301585" name="Mo95"/>
+      <nuclide ao="0.002417585" name="Mo96"/>
+      <nuclide ao="0.0013893900000000001" name="Mo97"/>
+      <nuclide ao="0.00352234" name="Mo98"/>
+      <nuclide ao="0.00141288" name="Mo100"/>
+      <nuclide ao="9.079200000000001e-08" name="Sn112"/>
+      <nuclide ao="6.1776e-08" name="Sn114"/>
+      <nuclide ao="3.1824e-08" name="Sn115"/>
+      <nuclide ao="1.3609440000000001e-06" name="Sn116"/>
+      <nuclide ao="7.18848e-07" name="Sn117"/>
+      <nuclide ao="2.266992e-06" name="Sn118"/>
+      <nuclide ao="8.040240000000001e-07" name="Sn119"/>
+      <nuclide ao="3.049488e-06" name="Sn120"/>
+      <nuclide ao="4.33368e-07" name="Sn122"/>
+      <nuclide ao="5.41944e-07" name="Sn124"/>
+      <nuclide ao="3.68707e-09" name="Ta180"/>
+      <nuclide ao="3.069631293e-05" name="Ta181"/>
+      <nuclide ao="3.6239999999999995e-09" name="W180"/>
+      <nuclide ao="8.003e-07" name="W182"/>
+      <nuclide ao="4.32162e-07" name="W183"/>
+      <nuclide ao="9.25328e-07" name="W184"/>
+      <nuclide ao="8.58586e-07" name="W186"/>
+      <nuclide ao="2.996e-08" name="Pb204"/>
+      <nuclide ao="5.157399999999999e-07" name="Pb206"/>
+      <nuclide ao="4.7293999999999995e-07" name="Pb207"/>
+      <nuclide ao="1.12136e-06" name="Pb208"/>
+      <nuclide ao="2.13e-06" name="Bi209"/>
+    </material>
+  </materials>
+  <geometry>
+    <cell id="1" material="1" name="Inner Cylinder" region="2 -1 3 -4" universe="1"/>
+    <cell id="2" material="2" name="Outer Cylinder" region="6 -5 3 -7" universe="1"/>
+    <cell id="3" material="2" name="Plate" region="-1 8 -7" universe="1"/>
+    <cell id="4" material="void" name="Tally 1" region="-9 -18 17" universe="1"/>
+    <cell id="5" material="void" name="Tally 2" region="-10 9 -18 17" universe="1"/>
+    <cell id="6" material="void" name="Tally 3" region="-11 10 -18 17" universe="1"/>
+    <cell id="7" material="void" name="Tally 4" region="-12 11 -18 17" universe="1"/>
+    <cell id="8" material="void" name="Tally 5" region="-13 12 -18 17" universe="1"/>
+    <cell id="9" material="void" name="Tally 6" region="-14 13 -18 17" universe="1"/>
+    <cell id="10" material="void" name="Tally 7" region="-15 14 -18 17" universe="1"/>
+    <cell id="11" material="void" name="Tally 8" region="-16 15 -18 17" universe="1"/>
+    <cell id="12" material="void" name="Source" region="-20 19 -5" universe="1"/>
+    <cell id="13" material="void" region="-22 21 -24 23 -26 25 (-2 | 1 | -3 | 4) (-2 | 1 | -3 | 4) (-6 | 5 | -3 | 7) (1 | -8 | 7) (9 | 18 | -17) (10 | -9 | 18 | -17) (11 | -10 | 18 | -17) (12 | -11 | 18 | -17) (13 | -12 | 18 | -17) (14 | -13 | 18 | -17) (15 | -14 | 18 | -17) (16 | -15 | 18 | -17) (20 | -19 | 5)" universe="1"/>
+    <surface coeffs="0.0 0.0 48.0" id="1" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 7.5" id="2" type="z-cylinder"/>
+    <surface coeffs="110.0" id="3" type="z-plane"/>
+    <surface coeffs="320.0" id="4" type="z-plane"/>
+    <surface coeffs="0.0 0.0 100.0" id="5" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 50.0" id="6" type="z-cylinder"/>
+    <surface coeffs="660.0" id="7" type="z-plane"/>
+    <surface coeffs="645.0" id="8" type="z-plane"/>
+    <surface coeffs="0.0 0.0 15.0" id="9" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 30.0" id="10" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 45.0" id="11" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 60.0" id="12" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 75.0" id="13" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 90.0" id="14" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 105.0" id="15" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 120.0" id="16" type="z-cylinder"/>
+    <surface coeffs="690.0" id="17" type="z-plane"/>
+    <surface coeffs="700.0" id="18" type="z-plane"/>
+    <surface coeffs="0.0" id="19" type="z-plane"/>
+    <surface coeffs="10.0" id="20" type="z-plane"/>
+    <surface boundary="vacuum" coeffs="-300.0" id="21" type="x-plane"/>
+    <surface boundary="vacuum" coeffs="300.0" id="22" type="x-plane"/>
+    <surface boundary="vacuum" coeffs="-300.0" id="23" type="y-plane"/>
+    <surface boundary="vacuum" coeffs="300.0" id="24" type="y-plane"/>
+    <surface boundary="vacuum" coeffs="-30.0" id="25" type="z-plane"/>
+    <surface boundary="vacuum" coeffs="950.0" id="26" type="z-plane"/>
+  </geometry>
+  <settings>
+    <run_mode>fixed source</run_mode>
+    <particles>100000</particles>
+    <batches>100</batches>
+    <source particle="neutron" strength="1.0" type="independent">
+      <space origin="0.0 0.0 0.0" type="cylindrical">
+        <r parameters="0.0 100.0 1.0" type="powerlaw"/>
+        <phi parameters="0.0 6.283185307179586" type="uniform"/>
+        <z parameters="0.0 10.0" type="uniform"/>
+      </space>
+      <angle type="isotropic"/>
+      <energy type="discrete">
+        <parameters>14000000.0 1.0</parameters>
+      </energy>
+      <constraints>
+        <domain_type>cell</domain_type>
+        <domain_ids>12</domain_ids>
+      </constraints>
+    </source>
+    <photon_transport>false</photon_transport>
+    <survival_biasing>false</survival_biasing>
+  </settings>
+  <tallies>
+    <mesh id="1">
+      <dimension>120 120 196</dimension>
+      <lower_left>-300.0 -300.0 -30.0</lower_left>
+      <upper_right>300.0 300.0 950.0</upper_right>
+    </mesh>
+    <filter id="1" type="cell">
+      <bins>4 5 6 7 8 9 10 11</bins>
+    </filter>
+    <filter id="4" type="mesh">
+      <bins>1</bins>
+    </filter>
+    <tally id="1" name="tally_cells_n">
+      <filters>1</filters>
+      <scores>flux</scores>
+    </tally>
+    <tally id="3" name="tally_n_mesh">
+      <filters>4</filters>
+      <scores>flux</scores>
+    </tally>
+  </tallies>
+</model>
