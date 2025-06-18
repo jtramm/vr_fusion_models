@@ -9,17 +9,16 @@ def summarize_ITER_cyl_statepoint(sp_path, label):
     means = tally.get_values(value='mean').ravel()
     means_safe = np.where(means == 0, 1.0, means)
     sigmas = tally.get_values(value='std_dev').ravel()
-    rel_errs = sigmas / means_safe
-    avg_rel_err = np.mean(rel_errs)
-
-    avg_sigma = np.mean(sigmas)
-    max_sigma = np.max(sigmas)
-    figure_of_merit = 1 / (avg_rel_err**2 * transport_time)
+    sigmas_safe = np.where(sigmas == 0, 1.0, sigmas)
+    
+    avg_rel_sigma = np.mean(sigmas_safe / means_safe)
+    max_rel_sigma = np.max(sigmas_safe / means_safe)
+    figure_of_merit = 1 / (avg_rel_sigma**2 * transport_time)
 
     results = {}
     results['transport_time'] = transport_time
-    results['avg_sigma'] = avg_sigma
-    results['max_sigma'] = max_sigma
+    results['avg_rel_sigma'] = avg_rel_sigma
+    results['max_rel_sigma'] = max_rel_sigma
     results['figure_of_merit'] = figure_of_merit
 
     return results
@@ -79,8 +78,8 @@ def run_ITER_cyl():
     #wws[0].max_split = 10
     model.settings.weight_windows = wws
 
-    model.settings.particles = 15 #10000
-    model.settings.batches = 4 #25
+    model.settings.particles = 500 #10000
+    model.settings.batches = 15 #25
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc.xml')

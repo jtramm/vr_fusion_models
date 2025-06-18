@@ -385,21 +385,20 @@ def run_labyrinth():
 def summarize_labyrinth_statepoint(sp_path, label):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
-    tally   = sp.get_tally(name="flux tally")
-    means  = tally.get_values(value='mean').ravel()
+    tally = sp.get_tally(name="flux tally")
+    means = tally.get_values(value='mean').ravel()
     means_safe = np.where(means == 0, 1.0, means)
     sigmas = tally.get_values(value='std_dev').ravel()
-    rel_errs = sigmas / means_safe
-    avg_rel_err = np.mean(rel_errs)
+    sigmas_safe = np.where(sigmas == 0, 1.0, sigmas)
 
-    avg_sigma = np.mean(sigmas)
-    max_sigma = np.max(sigmas)
-    figure_of_merit = 1 / (avg_rel_err**2 * transport_time) 
+    avg_rel_sigma = np.mean(sigmas_safe / means_safe)
+    max_rel_sigma = np.max(sigmas_safe / means_safe)
+    figure_of_merit = 1 / (avg_rel_sigma**2 * transport_time) 
 
     results = {}
     results['transport_time'] = transport_time
-    results['avg_sigma'] = avg_sigma
-    results['max_sigma'] = max_sigma
+    results['avg_rel_sigma'] = avg_rel_sigma
+    results['max_rel_sigma'] = max_rel_sigma
     results['figure_of_merit'] = figure_of_merit
 
     return results
