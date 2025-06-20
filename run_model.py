@@ -3,8 +3,8 @@ from ITER_cylinder.ITER_cyl           import run_ITER_cyl
 from water_sphere.water_sph           import run_water_sph
 
 problems = [
-    ("Labyrinth",     run_labyrinth),
-    ("ITER_Cylinder", run_ITER_cyl),
+    # ("Labyrinth",     run_labyrinth),
+    # ("ITER_Cylinder", run_ITER_cyl),
     ("water_sphere", run_water_sph),
 ]
 

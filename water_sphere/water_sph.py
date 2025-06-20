@@ -1,4 +1,5 @@
 import os
+import copy
 import openmc
 import numpy as np
 
@@ -107,55 +108,54 @@ def run_water_sph():
     # run_random_ray calculation 
     #--------------------------- 
 
-    model.export_to_xml()
+    random_ray_model = copy.deepcopy(model)
 
-    model.convert_to_multigroup(
+    random_ray_model.convert_to_multigroup(
         method='material_wise', 
         correction='P0', 
-        groups=openmc.mgxs.EnergyGroups(openmc.mgxs.GROUP_STRUCTURES['CASMO-70']), 
+        groups=openmc.mgxs.EnergyGroups(openmc.mgxs.GROUP_STRUCTURES['CASMO-2']), 
         nparticles=100000
     )
 
-    model.convert_to_random_ray()
+    random_ray_model.convert_to_random_ray()
 
     mesh = openmc.SphericalMesh(
         r_grid=np.linspace(0.0, 90.0, 90), 
         origin=[0.0, 0.0, 0.0]
     )
 
-    model.settings.random_ray['source_region_meshes'] = [(mesh, [geometry.root_universe])]
-    model.settings.random_ray['distance_inactive'] = 60.0
-    model.settings.random_ray['distance_active'] = 120.0
-    model.settings.random_ray['sample_method'] = 'prng'
-    model.settings.particles = 10000 #100000
-    model.settings.inactive = 50 #200
-    model.settings.batches = 100 #300
+    random_ray_model.settings.random_ray['source_region_meshes'] = [(mesh, [geometry.root_universe])]
+    random_ray_model.settings.random_ray['distance_inactive'] = 60.0
+    random_ray_model.settings.random_ray['distance_active'] = 120.0
+    random_ray_model.settings.random_ray['sample_method'] = 'prng'
+    random_ray_model.settings.particles = 10000 #100000
+    random_ray_model.settings.inactive = 50 #200
+    random_ray_model.settings.batches = 100 #300
 
     wwg = openmc.WeightWindowGenerator(
-        mesh, method='fw_cadis', max_realizations=model.settings.batches)
-    model.settings.weight_window_generators = [wwg]
+        mesh, method='fw_cadis', max_realizations=random_ray_model.settings.batches)
+    random_ray_model.settings.weight_window_generators = [wwg]
 
-    model.run(path='random_ray.xml')
+    random_ray_model.run(path='random_ray.xml')
 
     #-------------------
     # run_mc calculation
     #-------------------
 
-    model = openmc.Model.from_xml()
     model.settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     model.settings.survival_biasing = False
     wws = openmc.hdf5_to_wws('weight_windows.h5')
     model.settings.weight_windows = wws
 
-    model.settings.particles = 10000
-    model.settings.batches = 25
+    model.settings.particles = 20000
+    model.settings.batches = 45
     
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='with_WW.xml')
     result_with_WW = summarize_water_sph_statepoint(statepoint_name, 'with_WW')
 
-    model.settings.particles = 100000 #10000
-    model.settings.batches = 60 #50
+    model.settings.particles = 100000
+    model.settings.batches = 60
 
     model.settings.weight_windows_on = False
     statepoint_name  = model.run(path='no_WW.xml')
