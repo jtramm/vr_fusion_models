@@ -23,12 +23,12 @@ def summarize_ITER_cyl_statepoint(sp_path, label):
 
     return results
 
-#---------------------------
-# run_random_ray calculation 
-#---------------------------
-
 def run_ITER_cyl():
 
+    #---------------------------
+    # run_random_ray calculation 
+    #---------------------------   
+ 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
@@ -48,14 +48,10 @@ def run_ITER_cyl():
     mesh.upper_right = bbox.upper_right
     mesh.dimension = (120, 120, 196)
 
-
-    model.settings.random_ray["source_region_meshes"] = [
-        (mesh, [model.geometry.root_universe])
-    ]
+    model.settings.random_ray["source_region_meshes"] = [(mesh, [model.geometry.root_universe])]
     model.settings.random_ray["distance_inactive"] = 1500.0
     model.settings.random_ray["distance_active"] = 3000.0
     model.settings.particles = 10000
-
     model.settings.batches = 100
     model.settings.inactive = 50
 
@@ -63,12 +59,12 @@ def run_ITER_cyl():
         mesh, method='fw_cadis', max_realizations=model.settings.batches)
     model.settings.weight_window_generators = [wwg]
 
-    plot = openmc.Plot()
-    plot.origin = bbox.center
-    plot.width = bbox.width
-    plot.pixels = (200, 200, 160)
-    plot.type = 'voxel'
-    model.plots = [plot]
+    # plot = openmc.Plot()
+    # plot.origin = bbox.center
+    # plot.width = bbox.width
+    # plot.pixels = (200, 200, 160)
+    # plot.type = 'voxel'
+    # model.plots = [plot]
 
     model.run(path='random_ray.xml')
 
@@ -80,7 +76,6 @@ def run_ITER_cyl():
     model.settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     model.settings.survival_biasing = False
     wws = openmc.hdf5_to_wws('weight_windows.h5')
-    #wws[0].max_split = 10
     model.settings.weight_windows = wws
 
     model.settings.particles = 10
@@ -98,7 +93,7 @@ def run_ITER_cyl():
     results_no_WW = summarize_ITER_cyl_statepoint(statepoint_name, "no_WW")
 
     os.chdir(orig_dir)
-    
+
     return results_with_WW, results_no_WW
 
 if __name__ == "__main__":
