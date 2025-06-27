@@ -1,11 +1,13 @@
 from labyrinth_example.labyrinth      import run_labyrinth
 from ITER_cylinder.ITER_cyl           import run_ITER_cyl
 from water_sphere.water_sph           import run_water_sph
+from simple_tokamak.simple_tok        import run_simple_tok
 
 problems = [
     # ("Labyrinth",     run_labyrinth),
-    # ("ITER_Cylinder", run_ITER_cyl),
-    ("water_sphere", run_water_sph),
+    # ("ITER_Cyl", run_ITER_cyl),
+    # ("water_sphere", run_water_sph),
+    ("simple_tok", run_simple_tok),
 ]
 
 print()

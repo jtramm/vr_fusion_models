@@ -240,7 +240,7 @@ def run_labyrinth():
     sp_default = simulation_using_ww_off.run()
     os.replace(sp_default, "labyrinth_statepoint_no_WW.h5")
     statepoint_off = "labyrinth_statepoint_no_WW.h5"
-    results_no_WW = summarize_labyrinth_statepoint(statepoint_off, "no_WW")
+    results_no_WW = summarize_labyrinth_statepoint(statepoint_off)
 
     # def plot_mesh_tally(statepoint_filename, image_filename):
 
@@ -299,7 +299,7 @@ def run_labyrinth():
     sp_default = simulation_using_ww_on.run()
     os.replace(sp_default, "labyrinth_statepoint_with_WW.h5")
     statepoint_on = "labyrinth_statepoint_with_WW.h5"
-    results_with_WW = summarize_labyrinth_statepoint(statepoint_on, "with_WW")
+    results_with_WW = summarize_labyrinth_statepoint(statepoint_on)
 
     # plot_mesh_tally(statepoint_on, "fw_cadis.png")
     
@@ -307,7 +307,7 @@ def run_labyrinth():
 
     return results_with_WW, results_no_WW
 
-def summarize_labyrinth_statepoint(sp_path, label):
+def summarize_labyrinth_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
     tally = sp.get_tally(name="flux tally")

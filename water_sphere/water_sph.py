@@ -3,7 +3,7 @@ import copy
 import openmc
 import numpy as np
 
-def summarize_water_sph_statepoint(sp_path, label):
+def summarize_water_sph_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
     tally = sp.get_tally(name="flux tally")
@@ -90,19 +90,19 @@ def run_water_sph():
     tally.scores = ['flux']
     tallies = openmc.Tallies([tally])
 
-    plot = openmc.Plot()
-    plot.origin = [0, 0, 0]
-    plot.width = [126, 126, 126]
-    plot.pixels = [126, 126, 126]
-    plot.type = 'voxel'
-    
-    plots = openmc.Plots([plot])
     model = openmc.Model()
     model.materials = materials
     model.geometry = geometry
     model.settings = settings
     model.tallies = tallies
-    model.plots = plots
+
+    # plot = openmc.Plot()
+    # plot.origin = [0, 0, 0]
+    # plot.width = [126, 126, 126]
+    # plot.pixels = [126, 126, 126]
+    # plot.type = 'voxel'
+    # plots = openmc.Plots([plot])
+    # model.plots = plots
     
     #---------------------------
     # run_random_ray calculation 
@@ -152,14 +152,14 @@ def run_water_sph():
     
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='with_WW.xml')
-    result_with_WW = summarize_water_sph_statepoint(statepoint_name, 'with_WW')
+    result_with_WW = summarize_water_sph_statepoint(statepoint_name)
 
     model.settings.particles = 100000
     model.settings.batches = 60
 
     model.settings.weight_windows_on = False
     statepoint_name  = model.run(path='no_WW.xml')
-    result_no_WW = summarize_water_sph_statepoint(statepoint_name, 'no_WW')
+    result_no_WW = summarize_water_sph_statepoint(statepoint_name)
 
     os.chdir(orig_dir)
 

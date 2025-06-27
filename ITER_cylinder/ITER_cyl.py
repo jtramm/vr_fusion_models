@@ -2,7 +2,7 @@ import os
 import openmc
 import numpy as np
 
-def summarize_ITER_cyl_statepoint(sp_path, label):
+def summarize_ITER_cyl_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
     tally = sp.get_tally(id=1)
@@ -83,14 +83,14 @@ def run_ITER_cyl():
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc.xml')
-    results_with_WW = summarize_ITER_cyl_statepoint(statepoint_name, "with_WW")
+    results_with_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
     model.settings.particles = 100000 
     model.settings.batches = 70
 
     model.settings.weight_windows_on = False
     statepoint_name = model.run(path='mc.xml')
-    results_no_WW = summarize_ITER_cyl_statepoint(statepoint_name, "no_WW")
+    results_no_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
     os.chdir(orig_dir)
 
