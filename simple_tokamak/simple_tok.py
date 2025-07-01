@@ -43,8 +43,8 @@ def run_simple_tok():
     model.settings.electron_transport = False
     model.settings.positron_transport = False
 
-    reflective_face_1 = openmc.Surface(id=10000)
-    reflective_face_2 = openmc.Surface(id=11000)
+    reflective_face_1 = model.geometry.get_all_surfaces()[10000]
+    reflective_face_2 = model.geometry.get_all_surfaces()[11000]
 
     vac_zmax = openmc.ZPlane(z0=  1000, boundary_type='vacuum')
     vac_zmin = openmc.ZPlane(z0= -1000, boundary_type='vacuum')
@@ -90,22 +90,22 @@ def run_simple_tok():
 
     random_ray_model.settings.random_ray["source_region_meshes"] = [(mesh, [outer_cell])]
     random_ray_model.settings.random_ray["distance_inactive"] = 1500.0
-    random_ray_model.settings.random_ray["distance_active"] = 6000.0
+    random_ray_model.settings.random_ray["distance_active"] = 3000.0
     random_ray_model.settings.random_ray["sample_method"] = "prng"
-    random_ray_model.settings.particles = 50000
+    random_ray_model.settings.particles = 10000
     random_ray_model.settings.batches   = 100
-    random_ray_model.settings.inactive  = 0
+    random_ray_model.settings.inactive  = 50
 
     wwg = openmc.WeightWindowGenerator(
         mesh, method='fw_cadis', max_realizations = random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
     
-    # plot = openmc.Plot()
-    # plot.origin = bbox.center
-    # plot.width = bbox.width
-    # plot.pixels = (800, 800, 800)
-    # plot.type = 'voxel'
-    # random_ray_model.plots = [plot]
+    plot = openmc.Plot()
+    plot.origin = bbox.center
+    plot.width = bbox.width
+    plot.pixels = (120, 120, 120)
+    plot.type = 'voxel'
+    random_ray_model.plots = [plot]
 
     random_ray_model.run(path="random_ray.xml")
 
@@ -118,7 +118,7 @@ def run_simple_tok():
     model.settings.weight_windows = openmc.hdf5_to_wws("weight_windows.h5")
 
     model.settings.particles = 8000
-    model.settings.batches   = 40
+    model.settings.batches   = 35
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path="mc.xml")
