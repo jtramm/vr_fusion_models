@@ -96,14 +96,6 @@ def run_water_sph():
     model.settings = settings
     model.tallies = tallies
 
-    # plot = openmc.Plot()
-    # plot.origin = [0, 0, 0]
-    # plot.width = [126, 126, 126]
-    # plot.pixels = [126, 126, 126]
-    # plot.type = 'voxel'
-    # plots = openmc.Plots([plot])
-    # model.plots = plots
-    
     #---------------------------
     # run_random_ray calculation 
     #--------------------------- 
@@ -136,6 +128,14 @@ def run_water_sph():
         mesh, method='fw_cadis', max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
 
+    # plot = openmc.Plot()
+    # plot.origin = [0, 0, 0]
+    # plot.width = [126, 126, 126]
+    # plot.pixels = [126, 126, 126]
+    # plot.type = 'voxel'
+    # plots = openmc.Plots([plot])
+    # model.plots = plots
+    
     random_ray_model.run(path='random_ray.xml')
 
     #-------------------
@@ -148,14 +148,14 @@ def run_water_sph():
     model.settings.weight_windows = wws
 
     model.settings.particles = 20000
-    model.settings.batches = 45
+    model.settings.batches = 40
     
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='with_WW.xml')
     result_with_WW = summarize_water_sph_statepoint(statepoint_name)
 
     model.settings.particles = 100000
-    model.settings.batches = 60
+    model.settings.batches = 55
 
     model.settings.weight_windows_on = False
     statepoint_name  = model.run(path='no_WW.xml')
