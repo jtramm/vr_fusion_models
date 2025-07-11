@@ -3,7 +3,6 @@ import copy
 import numpy as np
 import openmc
 
-
 def summarize_proxima_fusion_statepoint(sp_path: str):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
@@ -31,6 +30,7 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
+    print("Writing outputs into:", os.getcwd())
 
     layer_1 = openmc.Material(name='layer_1')
     layer_1.add_nuclide('Fe56', 1.0, 'ao'); layer_1.set_density('g/cm3', 7.0)
@@ -83,9 +83,9 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
     random_ray_model = copy.deepcopy(model)
     random_ray_model.tallies = openmc.Tallies()
 
-    random_ray_model.settings.particles = 10000
-    random_ray_model.settings.batches   = 50
-    random_ray_model.settings.inactive  = 10
+    random_ray_model.settings.particles = 30000
+    random_ray_model.settings.batches   = 100
+    random_ray_model.settings.inactive  = 50
 
     random_ray_model.convert_to_multigroup(
         method = "stochastic_slab",
@@ -115,7 +115,7 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
     plot = openmc.Plot()
     plot.origin = bbox.center
     plot.width = bbox.width
-    plot.pixels = (80, 80, 80)
+    plot.pixels = (200, 200, 200)
     plot.type = 'voxel'
     random_ray_model.plots = [plot]
     
@@ -129,8 +129,8 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
     model.settings.survival_biasing          = False
     model.settings.weight_windows            = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.particles = 5000
-    model.settings.batches   = 10
+    model.settings.particles = 500
+    model.settings.batches   = 5
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc_with_ww.xml')
