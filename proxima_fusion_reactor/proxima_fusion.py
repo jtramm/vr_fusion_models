@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import openmc
 
-def summarize_proxima_fusion_statepoint(sp_path: str):
+def summarize_proxima_fusion_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
     tally = sp.get_tally(id=2)
@@ -15,7 +15,7 @@ def summarize_proxima_fusion_statepoint(sp_path: str):
 
     avg_rel_sigma = np.mean(rel)
     max_rel_sigma = np.max(rel)
-    figure_of_merit = 0.0 if transport_time == 0.0 else 1.0 / (avg_rel_sigma**2 * transport_time)
+    figure_of_merit = 1 / (avg_rel_sigma**2 * transport_time)
 
     results = {}
     results['transport_time'] = transport_time
@@ -25,12 +25,13 @@ def summarize_proxima_fusion_statepoint(sp_path: str):
 
     return results
 
-def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
+def run_proxima_fusion():
+
+    mesh_file = 'dagmc_surface_mesh.h5m'
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
-    print("Writing outputs into:", os.getcwd())
 
     layer_1 = openmc.Material(name='layer_1')
     layer_1.add_nuclide('Fe56', 1.0, 'ao'); layer_1.set_density('g/cm3', 7.0)
@@ -49,15 +50,16 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
     geometry.export_to_xml()
 
     mesh = openmc.RegularMesh.from_domain(root_universe)
-    mesh.dimension = (20, 20, 20)
-    tally_mesh = openmc.Tally(name='H3_rmesh_tally')
-    tally_mesh.filters = [openmc.MeshFilter(mesh)]; tally_mesh.scores = ['H3-production']
+    mesh.dimension = (200, 200, 200)
+    tally_flux = openmc.Tally(name='flux_mesh_tally')
+    tally_flux.filters = [openmc.MeshFilter(mesh)]
+    tally_flux.scores  = ['flux']
+
     tally_mat  = openmc.Tally(name='H3_material_tally')
     tally_mat.filters = [openmc.MaterialFilter(layer_2)]; tally_mat.scores = ['H3-production']
     tally_heat = openmc.Tally(name='magnet_heating_material_tally')
     tally_heat.filters = [openmc.MaterialFilter(magnet)]; tally_heat.scores = ['heating']
-    tallies = openmc.Tallies([tally_mesh, tally_mat, tally_heat])
-    tallies.export_to_xml()
+    tallies = openmc.Tallies([tally_flux, tally_mat, tally_heat])
 
     src = openmc.IndependentSource()
     src.space  = openmc.stats.CylindricalIndependent(
@@ -112,12 +114,12 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
         mesh, method='fw_cadis', max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
 
-    plot = openmc.Plot()
-    plot.origin = bbox.center
-    plot.width = bbox.width
-    plot.pixels = (200, 200, 200)
-    plot.type = 'voxel'
-    random_ray_model.plots = [plot]
+    # plot = openmc.Plot()
+    # plot.origin = bbox.center
+    # plot.width = bbox.width
+    # plot.pixels = (400, 400, 400)
+    # plot.type = 'voxel'
+    # random_ray_model.plots = [plot]
     
     random_ray_model.run(path='random_ray.xml')
 
@@ -129,22 +131,30 @@ def run_proxima_fusion(mesh_file: str = 'dagmc_surface_mesh.h5m'):
     model.settings.survival_biasing          = False
     model.settings.weight_windows            = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.particles = 500
-    model.settings.batches   = 5
+    model.settings.particles = 20000
+    model.settings.batches   = 20
 
     model.settings.weight_windows_on = True
-    statepoint_name = model.run(path='mc_with_ww.xml')
-    results_with_WW = summarize_proxima_fusion_statepoint(statepoint_name)
+    sp_with = model.run(path='mc_with_ww.xml')
+    results_with_WW = summarize_proxima_fusion_statepoint(sp_with)
 
-    model.settings.particles = 5000
-    model.settings.batches   = 10
-
+    model.settings.particles = 20000
+    model.settings.batches   = 20
     model.settings.weight_windows_on = False
-    statepoint_name = model.run(path='mc_no_ww.xml')
-    results_no_WW = summarize_proxima_fusion_statepoint(statepoint_name)
+    sp_no = model.run(path='mc_no_ww.xml')
+    results_no_WW = summarize_proxima_fusion_statepoint(sp_no)
+
+    for sp_file, tag in [(sp_with, 'with_ww'), (sp_no, 'no_ww')]:
+        sp         = openmc.StatePoint(sp_file)
+        tally      = sp.get_tally(name='flux_mesh_tally')
+        mesh0      = tally.filters[0].mesh
+        data       = tally.get_values(value='mean').ravel()
+        mesh0.write_data_to_vtk(
+            filename=f'flux_{tag}.vtk',
+            datasets={'flux-mean': data}
+        )
 
     os.chdir(orig_dir)
-
     return results_with_WW, results_no_WW
 
 if __name__ == '__main__':

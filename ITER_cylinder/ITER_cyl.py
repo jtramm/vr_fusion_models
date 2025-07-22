@@ -55,7 +55,6 @@ def run_ITER_cyl():
     model.settings.batches = 100
     model.settings.inactive = 50
 
-    # comment out this section to generate a regular flux voxel plot instead of adjoint flux.
     wwg = openmc.WeightWindowGenerator(
         mesh, method='fw_cadis', max_realizations=model.settings.batches)
     model.settings.weight_window_generators = [wwg]
@@ -63,7 +62,7 @@ def run_ITER_cyl():
     # plot = openmc.Plot()
     # plot.origin = bbox.center
     # plot.width = bbox.width
-    # plot.pixels = (200, 200, 160)
+    # plot.pixels = (400, 400, 400)
     # plot.type = 'voxel'
     # model.plots = [plot]
 
@@ -79,8 +78,8 @@ def run_ITER_cyl():
     wws = openmc.hdf5_to_wws('weight_windows.h5')
     model.settings.weight_windows = wws
 
-    model.settings.particles = 10
-    model.settings.batches = 6
+    model.settings.particles = 100000
+    model.settings.batches = 35
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc.xml')

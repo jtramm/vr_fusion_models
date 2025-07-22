@@ -117,8 +117,8 @@ def run_simple_tok():
     model.settings.survival_biasing = False
     model.settings.weight_windows = openmc.hdf5_to_wws("weight_windows.h5")
 
-    model.settings.particles = 55000
-    model.settings.batches   = 50
+    model.settings.particles = 10000
+    model.settings.batches   = 25
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path="mc.xml")

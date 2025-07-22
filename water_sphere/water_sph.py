@@ -131,11 +131,10 @@ def run_water_sph():
     # plot = openmc.Plot()
     # plot.origin = [0, 0, 0]
     # plot.width = [126, 126, 126]
-    # plot.pixels = [126, 126, 126]
+    # plot.pixels = [400, 400, 400]
     # plot.type = 'voxel'
-    # plots = openmc.Plots([plot])
-    # model.plots = plots
-    
+    # random_ray_model.plots = openmc.Plots([plot])   
+
     random_ray_model.run(path='random_ray.xml')
 
     #-------------------
