@@ -24,7 +24,7 @@ def summarize_simple_tok_statepoint(sp_path):
 
     return results
 
-def run_simple_tok():
+def run_simple_tok(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=20, MGXS_correction=None):
 
     #---------------------------
     # run_random_ray calculation
@@ -33,12 +33,18 @@ def run_simple_tok():
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
+    
+    if os.path.exists("mgxs.h5"):
+        os.remove("mgxs.h5")
+        
+    random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
     geometry = openmc.Geometry.from_xml("geometry.xml")
     materials = openmc.Materials.from_xml("materials.xml")
     settings = openmc.Settings.from_xml("settings.xml")
     tallies = openmc.Tallies.from_xml("tallies.xml")
     model = openmc.Model(geometry = geometry, materials = materials, settings = settings, tallies = tallies)
+
     model.settings.photon_transport   = False
     model.settings.electron_transport = False
     model.settings.positron_transport = False
@@ -66,44 +72,52 @@ def run_simple_tok():
     model.geometry.root_universe = outer_universe
     model.geometry.determine_paths()
 
+    mesh = openmc.RegularMesh()
+    bbox = model.geometry.bounding_box
+    ll   = np.array(bbox.lower_left)
+    ur   = np.array(bbox.upper_right)
+    mesh.lower_left  = ll
+    mesh.upper_right = ur
+    dims = np.ceil((ur - ll) / mesh_cell_size_cm).astype(int)
+    mesh.dimension   = tuple(dims)
+
     random_ray_model = copy.deepcopy(model)
-    random_ray_model.tallies = []
+    random_ray_model.tallies = openmc.Tallies()
     random_ray_model.convert_to_multigroup(
         method = "stochastic_slab",
-        nparticles = 10000
+        nparticles = 10000, # 10000
+        groups=random_ray_groups,
+        correction=MGXS_correction,
     )
+
     random_ray_model.convert_to_random_ray()  
 
-    lower_left  = (vac_xmin.x0, vac_ymin.y0, vac_zmin.z0)
-    upper_right = (vac_xmax.x0, vac_ymax.y0, vac_zmax.z0)
-    box_space   = openmc.stats.Box(lower_left, upper_right)
+    bbox   = random_ray_model.geometry.bounding_box
+    orig_src = model.settings.source[0]
 
-    constraints={}
-    constraints['domains'] = [outer_cell]
-    random_ray_model.settings.random_ray['ray_source'] = openmc.IndependentSource(space=box_space, 
-                                                                                  constraints=constraints)
-    
-    bbox = random_ray_model.geometry.bounding_box
-    mesh = openmc.RegularMesh()
-    mesh.lower_left, mesh.upper_right = bbox.lower_left, bbox.upper_right
-    mesh.dimension = (100, 100, 100)
+    rr_src = copy.deepcopy(orig_src)
+    rr_src.space       = openmc.stats.Box(bbox.lower_left, bbox.upper_right)
+    rr_src.constraints = {'domains': [outer_cell]}
+
+    random_ray_model.settings.source                   = rr_src
+    random_ray_model.settings.random_ray['ray_source'] = rr_src
 
     random_ray_model.settings.random_ray["source_region_meshes"] = [(mesh, [outer_cell])]
     random_ray_model.settings.random_ray["distance_inactive"] = 1500.0
     random_ray_model.settings.random_ray["distance_active"] = 3000.0
     random_ray_model.settings.random_ray["sample_method"] = "prng"
-    random_ray_model.settings.particles = 30000
-    random_ray_model.settings.batches   = 100
-    random_ray_model.settings.inactive  = 50
+    random_ray_model.settings.particles = 30000 # 30000
+    random_ray_model.settings.batches   = 100 # 100
+    random_ray_model.settings.inactive  = 50 # 50
 
     wwg = openmc.WeightWindowGenerator(
-        mesh, method='fw_cadis', max_realizations = random_ray_model.settings.batches)
+        mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
     
     # plot = openmc.Plot()
     # plot.origin = bbox.center
     # plot.width = bbox.width
-    # plot.pixels = (400, 400, 400)
+    # plot.pixels = (100, 100, 100)
     # plot.type = 'voxel'
     # random_ray_model.plots = [plot]
 
@@ -116,16 +130,22 @@ def run_simple_tok():
     model.settings.weight_window_checkpoints = {"collision": True, "surface"  : True}
     model.settings.survival_biasing = False
     model.settings.weight_windows = openmc.hdf5_to_wws("weight_windows.h5")
+    for tally in model.tallies:
+        for flt in tally.filters:
+            if isinstance(flt, openmc.MeshFilter):
+                flt.mesh.lower_left  = ll
+                flt.mesh.upper_right = ur
+                flt.mesh.dimension   = tuple(dims)
 
-    model.settings.particles = 10000
-    model.settings.batches   = 25
+    model.settings.particles = 10 # 10000
+    model.settings.batches   = 1 # 25
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path="mc.xml")
     results_with_WW = summarize_simple_tok_statepoint(statepoint_name)
 
-    model.settings.particles = 10000
-    model.settings.batches   = 50
+    model.settings.particles = 10 # 10000
+    model.settings.batches   = 1 # 50
 
     model.settings.weight_windows_on = False
     statepoint_name = model.run(path="mc.xml")

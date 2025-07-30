@@ -25,13 +25,18 @@ def summarize_proxima_fusion_statepoint(sp_path):
 
     return results
 
-def run_proxima_fusion():
+def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=20, MGXS_correction=None):
 
     mesh_file = 'dagmc_surface_mesh.h5m'
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
+    
+    if os.path.exists("mgxs.h5"):
+        os.remove("mgxs.h5")
+        
+    random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
     layer_1 = openmc.Material(name='layer_1')
     layer_1.add_nuclide('Fe56', 1.0, 'ao'); layer_1.set_density('g/cm3', 7.0)
@@ -49,8 +54,15 @@ def run_proxima_fusion():
     geometry      = openmc.Geometry(root_universe)
     geometry.export_to_xml()
 
-    mesh = openmc.RegularMesh.from_domain(root_universe)
-    mesh.dimension = (200, 200, 200)
+    mesh = openmc.RegularMesh()
+    bbox = geometry.bounding_box
+    ll   = np.array(bbox.lower_left)
+    ur   = np.array(bbox.upper_right)
+    mesh.lower_left  = ll
+    mesh.upper_right = ur
+    dims = np.ceil((ur - ll) / mesh_cell_size_cm).astype(int)
+    mesh.dimension   = tuple(dims)
+
     tally_flux = openmc.Tally(name='flux_mesh_tally')
     tally_flux.filters = [openmc.MeshFilter(mesh)]
     tally_flux.scores  = ['flux']
@@ -78,6 +90,13 @@ def run_proxima_fusion():
 
     model = openmc.Model(geometry=geometry, materials=materials, settings=settings, tallies=tallies)
 
+    for tally in model.tallies:
+        for flt in tally.filters:
+            if isinstance(flt, openmc.MeshFilter):
+                flt.mesh.lower_left  = ll
+                flt.mesh.upper_right = ur
+                flt.mesh.dimension   = tuple(dims)
+            
     #---------------------------
     # run_random_ray calculation
     #---------------------------
@@ -85,14 +104,17 @@ def run_proxima_fusion():
     random_ray_model = copy.deepcopy(model)
     random_ray_model.tallies = openmc.Tallies()
 
-    random_ray_model.settings.particles = 30000
-    random_ray_model.settings.batches   = 100
-    random_ray_model.settings.inactive  = 50
+    random_ray_model.settings.particles = 30000 # 30000
+    random_ray_model.settings.batches   = 100 # 100
+    random_ray_model.settings.inactive  = 50 # 50
 
     random_ray_model.convert_to_multigroup(
-        method = "stochastic_slab",
-        nparticles = 10000
+        method="stochastic_slab",
+        nparticles=10000, # 10000
+        groups=random_ray_groups,
+        correction=MGXS_correction,
     )
+
     random_ray_model.convert_to_random_ray()
 
     bbox      = geometry.bounding_box
@@ -111,13 +133,13 @@ def run_proxima_fusion():
     random_ray_model.settings.random_ray['sample_method']     = 'prng'
 
     wwg = openmc.WeightWindowGenerator(
-        mesh, method='fw_cadis', max_realizations=random_ray_model.settings.batches)
+        mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
 
     # plot = openmc.Plot()
     # plot.origin = bbox.center
     # plot.width = bbox.width
-    # plot.pixels = (400, 400, 400)
+    # plot.pixels = (50, 50, 50)
     # plot.type = 'voxel'
     # random_ray_model.plots = [plot]
     
@@ -131,15 +153,15 @@ def run_proxima_fusion():
     model.settings.survival_biasing          = False
     model.settings.weight_windows            = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.particles = 20000
-    model.settings.batches   = 20
+    model.settings.particles = 100 # 20000
+    model.settings.batches   = 5 # 20
 
     model.settings.weight_windows_on = True
     sp_with = model.run(path='mc_with_ww.xml')
     results_with_WW = summarize_proxima_fusion_statepoint(sp_with)
 
-    model.settings.particles = 20000
-    model.settings.batches   = 20
+    model.settings.particles = 100 # 20000
+    model.settings.batches   = 5 # 20
     model.settings.weight_windows_on = False
     sp_no = model.run(path='mc_no_ww.xml')
     results_no_WW = summarize_proxima_fusion_statepoint(sp_no)

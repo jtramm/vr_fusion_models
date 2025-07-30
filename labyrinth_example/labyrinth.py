@@ -9,11 +9,16 @@ import subprocess
 # import matplotlib.pyplot as plt
 # from IPython.display import Image, display
 
-def run_labyrinth():
+def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=11, MGXS_correction=None):
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
+    
+    if os.path.exists("mgxs.h5"):
+        os.remove("mgxs.h5")
+
+    random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
     mat_air = openmc.Material(name="air")
     mat_air.add_element("N", 0.784431)
@@ -147,9 +152,9 @@ def run_labyrinth():
     settings = openmc.Settings()
     settings.run_mode = "fixed source"
     settings.source = source
-    settings.particles = 80
-    settings.batches = 100
-    settings.inactive = 50
+    settings.particles = 80 # 80
+    settings.batches = 100 # 100
+    settings.inactive = 50 # 50
 
     # plot = openmc.Plot()
     # plot.origin = geometry.root_universe.bounding_box.center
@@ -158,20 +163,34 @@ def run_labyrinth():
     # plot.type = 'voxel'
     # plot.id = 100
 
-    # plots = openmc.Plots([plot]) <-- to put this back in add 'plots=plots' to the line below 
+    # plots = openmc.Plots([plot]) # <-- to put this back in add 'plots=plots' to the line below 
 
     ce_model = openmc.Model(geometry, materials_continuous_xs, settings)
 
     rr_model = copy.deepcopy(ce_model)
-    rr_model.convert_to_multigroup(method="material_wise", overwrite_mgxs_library=False)
+    rr_model.convert_to_multigroup(
+        method="material_wise", 
+        groups=random_ray_groups,
+        correction=MGXS_correction,
+    )
 
     rr_model.convert_to_random_ray()
 
-    mesh = openmc.RegularMesh().from_domain(geometry)
-    mesh.dimension = (100, 100, 1)
-    mesh.id = 1
+    bbox = geometry.bounding_box
+    ll   = np.array(bbox.lower_left)
+    ur   = np.array(bbox.upper_right)
 
-    mesh_filter = openmc.MeshFilter(mesh, filter_id=1)
+    extent = ur - ll
+    nx = max(1, int(np.ceil(extent[0] / mesh_cell_size_cm)))
+    ny = max(1, int(np.ceil(extent[1] / mesh_cell_size_cm)))
+    nz = 1
+
+    mesh = openmc.RegularMesh()
+    mesh.lower_left  = ll
+    mesh.upper_right = ur
+    mesh.dimension   = (nx, ny, nz)
+
+    mesh_filter = openmc.MeshFilter(mesh)
     flux_tally = openmc.Tally(name="flux tally")
     flux_tally.filters = [mesh_filter]
     flux_tally.scores = ["flux"]
@@ -202,9 +221,7 @@ def run_labyrinth():
     # plot_random_ray_vtk("plot_100.vtk", "Random Ray Forward Flux (Thermal)")
 
     rr_model.settings.weight_window_generators = openmc.WeightWindowGenerator(
-        method='fw_cadis',
-        mesh=mesh,
-        max_realizations=settings.batches
+        method='fw_cadis', mesh=mesh, energy_bounds=list(weight_window_edges), max_realizations=settings.batches
     )
 
     rr_model.run()
@@ -228,8 +245,8 @@ def run_labyrinth():
     settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     settings.survival_biasing = False
     settings.weight_windows = weight_windows
-    settings.particles = 65000
-    settings.batches = 30
+    settings.particles = 65000 # 65000
+    settings.batches = 30 # 30
     settings.source = source
     settings.run_mode = "fixed source"
 
@@ -291,8 +308,8 @@ def run_labyrinth():
     # plot_mesh_tally(statepoint_off, "no_fw_cadis.png")
 
     settings.weight_windows_on = True
-    settings.particles = 30000
-    settings.batches = 15
+    settings.particles = 30000 # 30000
+    settings.batches = 15 # 15
     weight_windows = openmc.hdf5_to_wws('ww_fw_cadis.h5')
     settings.weight_windows = weight_windows
     simulation_using_ww_on = openmc.Model(geometry, materials_continuous_xs, settings, tallies)

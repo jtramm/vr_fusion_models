@@ -25,11 +25,16 @@ def summarize_JETSON_2D_statepoint(sp_path):
 
     return results
 
-def run_JETSON_2D():
+def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=10, MGXS_correction=None):
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
+    
+    if os.path.exists("mgxs.h5"):
+        os.remove("mgxs.h5")
+
+    random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
     mat_inconel = openmc.Material(name='Inconel600')
     mat_inconel.add_element('Ni', 0.75)
@@ -256,18 +261,18 @@ def run_JETSON_2D():
     settings.particles = 4500
     settings.run_mode = 'fixed source'
 
-    tallies = openmc.Tallies()
-
+    extent_xy = 2.0 * ro
+    n_xy = max(1, int(np.ceil(extent_xy / mesh_cell_size_cm)))
     mesh = openmc.RegularMesh()
-    dim = 400
-    mesh.dimension = [dim, dim]
-    mesh.lower_left = [-ro, -ro]
-    mesh.upper_right = [ro, ro]
+    mesh.lower_left  = [-ro, -ro]
+    mesh.upper_right = [ ro,  ro]
+    mesh.dimension   = [n_xy, n_xy]
+    dim = int(mesh.dimension[0])
 
     mesh_tally = openmc.Tally(name="mesh_flux")
     mesh_tally.filters = [openmc.MeshFilter(mesh)]
-    mesh_tally.scores = ['flux']
-    tallies.append(mesh_tally)
+    mesh_tally.scores  = ['flux']
+    tallies = openmc.Tallies([mesh_tally])
 
     model = openmc.Model(geometry=geometry, materials=mats, settings=settings, tallies=tallies)
 
@@ -317,37 +322,40 @@ def run_JETSON_2D():
 
     random_ray_model = copy.deepcopy(model)
 
-    group_edges = np.array([1e-11, 5.8e-8, 1.4e-7, 2.8e-7, 6.25e-7, 4e-6, 5.53e-3, 1.93e-1, 1.0e1]) * 1e6
+    # group_edges = np.array([1e-11, 5.8e-8, 1.4e-7, 2.8e-7, 6.25e-7, 4e-6, 5.53e-3, 1.93e-1, 1.0e1]) * 1e6
 
-    ECCO_33 = [
-        1.96E+01, 1.00E+01, 6.07E+00, 3.68E+00, 2.23E+00, 1.35E+00,
-        8.21E-01, 4.98E-01, 3.02E-01, 1.83E-01, 1.11E-01, 6.74E-02,
-        4.09E-02, 2.48E-02, 1.50E-02, 9.12E-03, 5.53E-03, 3.35E-03,
-        2.03E-03, 1.23E-03, 7.49E-04, 4.54E-04, 3.04E-04, 1.49E-04,
-        9.17E-05, 6.79E-05, 4.02E-05, 2.26E-05, 1.37E-05, 8.32E-06,
-        4.00E-06, 5.40E-07, 1.00E-07, 1.00E-11
-    ]
+    # ECCO_33 = [
+    #     1.96E+01, 1.00E+01, 6.07E+00, 3.68E+00, 2.23E+00, 1.35E+00,
+    #     8.21E-01, 4.98E-01, 3.02E-01, 1.83E-01, 1.11E-01, 6.74E-02,
+    #     4.09E-02, 2.48E-02, 1.50E-02, 9.12E-03, 5.53E-03, 3.35E-03,
+    #     2.03E-03, 1.23E-03, 7.49E-04, 4.54E-04, 3.04E-04, 1.49E-04,
+    #     9.17E-05, 6.79E-05, 4.02E-05, 2.26E-05, 1.37E-05, 8.32E-06,
+    #     4.00E-06, 5.40E-07, 1.00E-07, 1.00E-11
+    # ]
 
-    ECCO_33.reverse()
+    # ECCO_33.reverse()
 
-    ECCO_33 = [x * 1e6 for x in ECCO_33]
+    # ECCO_33 = [x * 1e6 for x in ECCO_33]
 
 
-    group_edges = ECCO_33
+    # group_edges = ECCO_33
 
     random_ray_model.convert_to_multigroup(method='stochastic_slab',
-                                        nparticles=100000,
-                                        groups=openmc.mgxs.EnergyGroups(group_edges),
-                                        overwrite_mgxs_library=True,
-                                        correction=None)
+                                        nparticles=100000, #100000
+                                        groups=random_ray_groups,
+                                        correction=MGXS_correction,
+                                        # groups=openmc.mgxs.EnergyGroups(group_edges),
+                                        # overwrite_mgxs_library=True,
+                                        # correction=None
+    )
 
     random_ray_model.convert_to_random_ray()
 
     random_ray_model.settings.random_ray['source_region_meshes'] = [(mesh, [random_ray_model.geometry.root_universe])]
 
-    random_ray_model.settings.particles = 4500
-    random_ray_model.settings.batches = 200
-    random_ray_model.settings.inactive = 100
+    random_ray_model.settings.particles = 4500 # 4500
+    random_ray_model.settings.batches = 200 # 200
+    random_ray_model.settings.inactive = 100 # 100
     random_ray_model.settings.random_ray['distance_inactive'] = 4000
     random_ray_model.settings.random_ray['distance_active'] = 20000
     random_ray_model.settings.random_ray['ray_source'] = openmc.IndependentSource(space=openmc.stats.Box(
@@ -358,10 +366,8 @@ def run_JETSON_2D():
     random_ray_model.settings.random_ray['volume_estimator'] = 'hybrid'
 
     wwg = openmc.WeightWindowGenerator(
-        method='fw_cadis',
-        mesh=mesh,
-        max_realizations=random_ray_model.settings.batches,
-        energy_bounds=openmc.mgxs.EnergyGroups(group_edges).group_edges,
+        method='fw_cadis', mesh=mesh, energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches,
+        # energy_bounds=openmc.mgxs.EnergyGroups(group_edges).group_edges,
     )
 
     random_ray_model.settings.weight_window_generators = wwg
@@ -372,7 +378,7 @@ def run_JETSON_2D():
 
     weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
     lower = weight_windows[0].lower_ww_bounds
-    ww = lower.reshape(dim, dim, len(group_edges)-1)
+    ww = lower.reshape(dim, dim, len(list(weight_window_edges))-1)
 
     fig = plt.figure(figsize=(8, 8))
     plt.imshow(np.log10(ww[:, :, 0]), origin='lower',
@@ -387,7 +393,7 @@ def run_JETSON_2D():
     plt.close(fig)
 
     fig = plt.figure(figsize=(8, 8))
-    plt.imshow(np.log10(ww[:, :, len(group_edges)-2]), origin='lower',
+    plt.imshow(np.log10(ww[:, :, len(list(weight_window_edges))-2]), origin='lower',
             extent=(-ro, ro, -ro, ro), cmap='coolwarm')
     plt.colorbar(label='Log10 Weight Window Lower Bounds')
     plt.title('Fast Group Weight Windows in XY Plane at Z=0')
@@ -402,15 +408,15 @@ def run_JETSON_2D():
     model.settings.survival_biasing = False
     model.settings.weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.batches = 10
-    model.settings.particles = 60000
+    model.settings.batches = 5 # 10
+    model.settings.particles = 100 # 60000
 
     model.settings.weight_windows_on = True
     sp_with = model.run(path="mc_with_ww.xml")
     results_with_WW = summarize_JETSON_2D_statepoint(sp_with)
 
-    model.settings.batches = 20
-    model.settings.particles = 150000
+    model.settings.batches = 5 # 20
+    model.settings.particles = 100 # 150000
 
     model.settings.weight_windows_on = False
     sp_no = model.run(path="mc_no_ww.xml")

@@ -23,7 +23,7 @@ def summarize_ITER_cyl_statepoint(sp_path):
 
     return results
 
-def run_ITER_cyl():
+def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=8, MGXS_correction=None):
 
     #---------------------------
     # run_random_ray calculation 
@@ -32,37 +32,47 @@ def run_ITER_cyl():
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
-        
+    
+    if os.path.exists("mgxs.h5"):
+        os.remove("mgxs.h5")
+    
+    random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
+
     model = openmc.Model.from_model_xml("monte_carlo_ITER_cyl.xml")
 
     model.convert_to_multigroup(
         method="stochastic_slab",
-        nparticles=10000
+        nparticles=10000, # 10000
+        groups=random_ray_groups,
+        correction=MGXS_correction,
     )
 
     model.convert_to_random_ray()
 
     mesh = openmc.RegularMesh()
     bbox = model.geometry.bounding_box
-    mesh.lower_left = bbox.lower_left
-    mesh.upper_right = bbox.upper_right
-    mesh.dimension = (120, 120, 196)
+    ll   = np.array(bbox.lower_left)
+    ur   = np.array(bbox.upper_right)
+    mesh.lower_left = ll
+    mesh.upper_right = ur
+    dims = np.ceil((ur - ll) / mesh_cell_size_cm).astype(int)
+    mesh.dimension = tuple(dims)
 
     model.settings.random_ray["source_region_meshes"] = [(mesh, [model.geometry.root_universe])]
     model.settings.random_ray["distance_inactive"] = 1500.0
     model.settings.random_ray["distance_active"] = 3000.0
-    model.settings.particles = 10000
-    model.settings.batches = 100
-    model.settings.inactive = 50
+    model.settings.particles = 10000 # 10000
+    model.settings.batches = 100 # 100
+    model.settings.inactive = 50 # 50
 
     wwg = openmc.WeightWindowGenerator(
-        mesh, method='fw_cadis', max_realizations=model.settings.batches)
+        mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=model.settings.batches)
     model.settings.weight_window_generators = [wwg]
 
     # plot = openmc.Plot()
     # plot.origin = bbox.center
     # plot.width = bbox.width
-    # plot.pixels = (400, 400, 400)
+    # plot.pixels = (100, 100, 100)
     # plot.type = 'voxel'
     # model.plots = [plot]
 
@@ -78,15 +88,22 @@ def run_ITER_cyl():
     wws = openmc.hdf5_to_wws('weight_windows.h5')
     model.settings.weight_windows = wws
 
-    model.settings.particles = 100000
-    model.settings.batches = 35
+    for tally in model.tallies:
+        for flt in tally.filters:
+            if isinstance(flt, openmc.MeshFilter):
+                flt.mesh.lower_left  = ll
+                flt.mesh.upper_right = ur
+                flt.mesh.dimension   = tuple(dims)
+
+    model.settings.particles = 100 # 100000
+    model.settings.batches = 5 # 35
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc.xml')
     results_with_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
-    model.settings.particles = 100000 
-    model.settings.batches = 70
+    model.settings.particles = 100 # 100000
+    model.settings.batches = 20 # 70
 
     model.settings.weight_windows_on = False
     statepoint_name = model.run(path='mc.xml')

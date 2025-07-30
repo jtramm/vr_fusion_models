@@ -5,18 +5,23 @@ from simple_tokamak.simple_tok             import run_simple_tok
 from proxima_fusion_reactor.proxima_fusion import run_proxima_fusion
 from JETSON_2D_Model.JETSON_2D             import run_JETSON_2D
 
+random_ray_edges = [0, 6.25e-1, 2e7]
+weight_window_edges = [0, 2e7]
+mesh_cell_size_cm = 8
+MGXS_correction = None # None or 'P0'
+
 problems = [
-    # ("Labyrinth",     run_labyrinth),
+    # ("Labyrinth", run_labyrinth),
     # ("ITER_Cyl", run_ITER_cyl),
-    # ("water_sphere", run_water_sph),
     # ("simple_tok", run_simple_tok),
     # ("proxima_fusion", run_proxima_fusion),
+    # ("water_sphere", run_water_sph),
     ("JETSON_2D", run_JETSON_2D),
 ]
 
 print()
 
-results = {name: fn() for name, fn in problems}
+results = {name: fn(random_ray_edges, weight_window_edges, mesh_cell_size_cm, MGXS_correction) for name, fn in problems}
 for name, (WW, noWW) in results.items():
     label = name.lower()
     print(f"-- {label} FOM --")

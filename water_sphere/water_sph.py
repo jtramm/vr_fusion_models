@@ -24,7 +24,7 @@ def summarize_water_sph_statepoint(sp_path):
 
     return results
 
-def run_water_sph():
+def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=1.0112359550561798, MGXS_correction='P0'):
 
     #--------------------
     # model creation code
@@ -33,7 +33,11 @@ def run_water_sph():
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
- 
+    
+    if os.path.exists("mgxs.h5"):
+        os.remove("mgxs.h5")
+
+    random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
     water = openmc.Material(name='Water')
     water.add_nuclide('H1', 2.0)
@@ -81,7 +85,7 @@ def run_water_sph():
     settings = openmc.Settings()
     settings.source = source
     settings.batches = 30
-    settings.particles = 1000000
+    settings.particles = 10000
     settings.run_mode = 'fixed source'
 
     target_filter = openmc.CellFilter(target_cell)
@@ -100,38 +104,45 @@ def run_water_sph():
     # run_random_ray calculation 
     #--------------------------- 
 
+    R = 90.0
+    dr = mesh_cell_size_cm
+    r_edges = list(np.arange(0.0, R, dr))
+    if r_edges[-1] < R:
+        r_edges.append(R)
+    mesh = openmc.SphericalMesh(r_grid=r_edges, origin=[0.0, 0.0, 0.0])
+
+    for tally in model.tallies:
+        for flt in tally.filters:
+            if isinstance(flt, openmc.MeshFilter):
+                flt.mesh = mesh
+
     random_ray_model = copy.deepcopy(model)
 
     random_ray_model.convert_to_multigroup(
         method='material_wise', 
-        correction='P0', 
-        groups=openmc.mgxs.EnergyGroups(openmc.mgxs.GROUP_STRUCTURES['CASMO-2']), 
-        nparticles=100000
+        nparticles=10000,
+        groups=random_ray_groups,
+        correction=MGXS_correction,
     )
 
     random_ray_model.convert_to_random_ray()
-
-    mesh = openmc.SphericalMesh(
-        r_grid=np.linspace(0.0, 90.0, 90), 
-        origin=[0.0, 0.0, 0.0]
-    )
 
     random_ray_model.settings.random_ray['source_region_meshes'] = [(mesh, [geometry.root_universe])]
     random_ray_model.settings.random_ray['distance_inactive'] = 60.0
     random_ray_model.settings.random_ray['distance_active'] = 120.0
     random_ray_model.settings.random_ray['sample_method'] = 'prng'
-    random_ray_model.settings.particles = 10000 #100000
-    random_ray_model.settings.inactive = 50 #200
-    random_ray_model.settings.batches = 100 #300
+    random_ray_model.settings.particles = 100000 #100000
+    random_ray_model.settings.inactive = 200 #200
+    random_ray_model.settings.batches = 300 #300
 
     wwg = openmc.WeightWindowGenerator(
-        mesh, method='fw_cadis', max_realizations=random_ray_model.settings.batches)
+        mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
 
     # plot = openmc.Plot()
     # plot.origin = [0, 0, 0]
     # plot.width = [126, 126, 126]
-    # plot.pixels = [400, 400, 400]
+    # plot.pixels = [100, 100, 100]
     # plot.type = 'voxel'
     # random_ray_model.plots = openmc.Plots([plot])   
 
@@ -146,15 +157,15 @@ def run_water_sph():
     wws = openmc.hdf5_to_wws('weight_windows.h5')
     model.settings.weight_windows = wws
 
-    model.settings.particles = 20000
-    model.settings.batches = 40
+    model.settings.particles = 100
+    model.settings.batches = 5
     
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='with_WW.xml')
     result_with_WW = summarize_water_sph_statepoint(statepoint_name)
 
-    model.settings.particles = 100000
-    model.settings.batches = 55
+    model.settings.particles = 200
+    model.settings.batches = 5
 
     model.settings.weight_windows_on = False
     statepoint_name  = model.run(path='no_WW.xml')
