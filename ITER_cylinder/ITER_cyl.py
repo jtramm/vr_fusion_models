@@ -43,7 +43,7 @@ def run_ITER_cyl(
     model = openmc.Model.from_model_xml("monte_carlo_ITER_cyl.xml")
     model.convert_to_multigroup(
         method="stochastic_slab",
-        nparticles=10000, # 10000
+        nparticles=10000,
         groups=random_ray_groups,
         correction=MGXS_correction,
     )
