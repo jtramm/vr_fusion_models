@@ -278,7 +278,7 @@ def run_JETSON_2D(
     random_ray_model = copy.deepcopy(model)
 
     random_ray_model.convert_to_multigroup(method='stochastic_slab',
-                                        nparticles=100000,
+                                        nparticles=10000,
                                         groups=random_ray_groups,
                                         correction=MGXS_correction,
     )
