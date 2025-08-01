@@ -24,11 +24,13 @@ def summarize_water_sph_statepoint(sp_path):
 
     return results
 
-def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=1.0112359550561798, MGXS_correction='P0'):
-
-    #--------------------
-    # model creation code
-    #--------------------
+def run_water_sph(
+        random_ray_edges=[0, 6.25e-1, 2e7], 
+        weight_window_edges=[0, 6.25e-1, 2e7], 
+        mesh_cell_size_cm=1.0112359550561798, 
+        MGXS_correction='P0',
+        volume_estimator='naive',
+    ):
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -100,10 +102,6 @@ def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     model.settings = settings
     model.tallies = tallies
 
-    #---------------------------
-    # run_random_ray calculation 
-    #--------------------------- 
-
     R = 90.0
     dr = mesh_cell_size_cm
     r_edges = list(np.arange(0.0, R, dr))
@@ -117,7 +115,6 @@ def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
                 flt.mesh = mesh
 
     random_ray_model = copy.deepcopy(model)
-
     random_ray_model.convert_to_multigroup(
         method='material_wise', 
         nparticles=10000,
@@ -126,31 +123,20 @@ def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     )
 
     random_ray_model.convert_to_random_ray()
-
     random_ray_model.settings.random_ray['source_region_meshes'] = [(mesh, [geometry.root_universe])]
+    random_ray_model.settings.random_ray['volume_estimator'] = volume_estimator
     random_ray_model.settings.random_ray['distance_inactive'] = 60.0
     random_ray_model.settings.random_ray['distance_active'] = 120.0
     random_ray_model.settings.random_ray['sample_method'] = 'prng'
-    random_ray_model.settings.particles = 100000 #100000
-    random_ray_model.settings.inactive = 200 #200
-    random_ray_model.settings.batches = 300 #300
+    random_ray_model.settings.particles = 120000
+    random_ray_model.settings.inactive = 150
+    random_ray_model.settings.batches = 300
 
     wwg = openmc.WeightWindowGenerator(
         mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches)
-    random_ray_model.settings.weight_window_generators = [wwg]
-
-    # plot = openmc.Plot()
-    # plot.origin = [0, 0, 0]
-    # plot.width = [126, 126, 126]
-    # plot.pixels = [100, 100, 100]
-    # plot.type = 'voxel'
-    # random_ray_model.plots = openmc.Plots([plot])   
+    random_ray_model.settings.weight_window_generators = [wwg]  
 
     random_ray_model.run(path='random_ray.xml')
-
-    #-------------------
-    # run_mc calculation
-    #-------------------
 
     model.settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     model.settings.survival_biasing = False
@@ -159,14 +145,12 @@ def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
 
     model.settings.particles = 10000
     model.settings.batches = 20
-    
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='with_WW.xml')
     result_with_WW = summarize_water_sph_statepoint(statepoint_name)
 
     model.settings.particles = 20000
     model.settings.batches = 40
-
     model.settings.weight_windows_on = False
     statepoint_name  = model.run(path='no_WW.xml')
     result_no_WW = summarize_water_sph_statepoint(statepoint_name)

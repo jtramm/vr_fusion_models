@@ -23,11 +23,13 @@ def summarize_ITER_cyl_statepoint(sp_path):
 
     return results
 
-def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=8, MGXS_correction=None):
-
-    #---------------------------
-    # run_random_ray calculation 
-    #---------------------------   
+def run_ITER_cyl(
+        random_ray_edges=[0, 6.25e-1, 2e7], 
+        weight_window_edges=[0, 6.25e-1, 2e7], 
+        mesh_cell_size_cm=8, 
+        MGXS_correction=None, 
+        volume_estimator='naive',
+    ): 
  
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -39,7 +41,6 @@ def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.2
     random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
     model = openmc.Model.from_model_xml("monte_carlo_ITER_cyl.xml")
-
     model.convert_to_multigroup(
         method="stochastic_slab",
         nparticles=10000, # 10000
@@ -59,6 +60,7 @@ def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.2
     mesh.dimension = tuple(dims)
 
     model.settings.random_ray["source_region_meshes"] = [(mesh, [model.geometry.root_universe])]
+    model.settings.random_ray['volume_estimator'] = volume_estimator
     model.settings.random_ray["distance_inactive"] = 1500.0
     model.settings.random_ray["distance_active"] = 3000.0
     model.settings.particles = 20000
@@ -69,18 +71,7 @@ def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.2
         mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=model.settings.batches)
     model.settings.weight_window_generators = [wwg]
 
-    # plot = openmc.Plot()
-    # plot.origin = bbox.center
-    # plot.width = bbox.width
-    # plot.pixels = (100, 100, 100)
-    # plot.type = 'voxel'
-    # model.plots = [plot]
-
     model.run(path='random_ray.xml')
-
-    #-------------------
-    # run_mc calculation
-    #-------------------
 
     model = openmc.Model.from_model_xml("monte_carlo_ITER_cyl.xml")
     model.settings.weight_window_checkpoints = {'collision': True, 'surface': True}
@@ -97,14 +88,12 @@ def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.2
 
     model.settings.particles = 100000
     model.settings.batches = 35
-
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc.xml')
     results_with_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
     model.settings.particles = 100000
     model.settings.batches = 70
-
     model.settings.weight_windows_on = False
     statepoint_name = model.run(path='mc.xml')
     results_no_WW = summarize_ITER_cyl_statepoint(statepoint_name)

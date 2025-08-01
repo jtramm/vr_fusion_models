@@ -25,7 +25,13 @@ def summarize_JETSON_2D_statepoint(sp_path):
 
     return results
 
-def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=10, MGXS_correction=None):
+def run_JETSON_2D(
+        random_ray_edges=[0, 6.25e-1, 2e7], 
+        weight_window_edges=[0, 6.25e-1, 2e7], 
+        mesh_cell_size_cm=10, 
+        MGXS_correction=None, 
+        volume_estimator='naive'
+    ):
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -353,7 +359,7 @@ def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
 
     random_ray_model.settings.random_ray['source_region_meshes'] = [(mesh, [random_ray_model.geometry.root_universe])]
 
-    random_ray_model.settings.particles = 20000
+    random_ray_model.settings.particles = 50000
     random_ray_model.settings.batches = 200
     random_ray_model.settings.inactive = 100
     random_ray_model.settings.random_ray['distance_inactive'] = 4000
@@ -363,7 +369,7 @@ def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     ))
     random_ray_model.settings.random_ray['source_shape'] = 'flat'
     random_ray_model.settings.random_ray['sample_method'] = 'halton'
-    random_ray_model.settings.random_ray['volume_estimator'] = 'hybrid'
+    random_ray_model.settings.random_ray['volume_estimator'] = volume_estimator
 
     wwg = openmc.WeightWindowGenerator(
         method='fw_cadis', mesh=mesh, energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches,

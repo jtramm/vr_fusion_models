@@ -25,7 +25,13 @@ def summarize_proxima_fusion_statepoint(sp_path):
 
     return results
 
-def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=20, MGXS_correction=None):
+def run_proxima_fusion(
+        random_ray_edges=[0, 6.25e-1, 2e7], 
+        weight_window_edges=[0, 6.25e-1, 2e7], 
+        mesh_cell_size_cm=20, 
+        MGXS_correction=None,
+        volume_estimator='naive',
+    ):
 
     mesh_file = 'dagmc_surface_mesh.h5m'
 
@@ -96,18 +102,12 @@ def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[
                 flt.mesh.lower_left  = ll
                 flt.mesh.upper_right = ur
                 flt.mesh.dimension   = tuple(dims)
-            
-    #---------------------------
-    # run_random_ray calculation
-    #---------------------------
 
     random_ray_model = copy.deepcopy(model)
     random_ray_model.tallies = openmc.Tallies()
-
     random_ray_model.settings.particles = 20000
     random_ray_model.settings.batches   = 200
     random_ray_model.settings.inactive  = 100
-
     random_ray_model.convert_to_multigroup(
         method="stochastic_slab",
         nparticles=10000, # 10000
@@ -131,23 +131,13 @@ def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[
     random_ray_model.settings.random_ray['distance_inactive'] = 1500.0
     random_ray_model.settings.random_ray['distance_active']   = 3000.0
     random_ray_model.settings.random_ray['sample_method']     = 'prng'
+    random_ray_model.settings.random_ray['volume_estimator'] = volume_estimator
 
     wwg = openmc.WeightWindowGenerator(
         mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
-
-    # plot = openmc.Plot()
-    # plot.origin = bbox.center
-    # plot.width = bbox.width
-    # plot.pixels = (50, 50, 50)
-    # plot.type = 'voxel'
-    # random_ray_model.plots = [plot]
     
     random_ray_model.run(path='random_ray.xml')
-
-    #-------------------
-    # run_mc calculation
-    #-------------------
 
     model.settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     model.settings.survival_biasing          = False
@@ -155,7 +145,6 @@ def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[
 
     model.settings.particles = 20000
     model.settings.batches   = 20
-
     model.settings.weight_windows_on = True
     sp_with = model.run(path='mc_with_ww.xml')
     results_with_WW = summarize_proxima_fusion_statepoint(sp_with)
@@ -165,16 +154,6 @@ def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[
     model.settings.weight_windows_on = False
     sp_no = model.run(path='mc_no_ww.xml')
     results_no_WW = summarize_proxima_fusion_statepoint(sp_no)
-
-    for sp_file, tag in [(sp_with, 'with_ww'), (sp_no, 'no_ww')]:
-        sp         = openmc.StatePoint(sp_file)
-        tally      = sp.get_tally(name='flux_mesh_tally')
-        mesh0      = tally.filters[0].mesh
-        data       = tally.get_values(value='mean').ravel()
-        mesh0.write_data_to_vtk(
-            filename=f'flux_{tag}.vtk',
-            datasets={'flux-mean': data}
-        )
 
     os.chdir(orig_dir)
     return results_with_WW, results_no_WW

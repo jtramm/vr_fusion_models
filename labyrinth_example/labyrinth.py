@@ -3,13 +3,14 @@ import numpy as np
 import openmc
 import copy
 import subprocess
-# from matplotlib import pyplot as plt
-# from matplotlib.colors import LogNorm
-# import pyvista as pv
-# import matplotlib.pyplot as plt
-# from IPython.display import Image, display
 
-def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.25e-1, 2e7], mesh_cell_size_cm=11, MGXS_correction=None):
+def run_labyrinth(
+        random_ray_edges=[0, 6.25e-1, 2e7], 
+        weight_window_edges=[0, 6.25e-1, 2e7], 
+        mesh_cell_size_cm=11, 
+        MGXS_correction=None,
+        volume_estimator='naive',
+    ):
 
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -134,9 +135,6 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
         ]
     )
 
-    # plot = geometry.plot(basis='xy',  color_by='material')
-    # plot.figure.savefig('geometry_top_down_view.png', bbox_inches="tight")
-
     source_x = width_a + width_b + width_c * 0.5
     source_y = depth_a + depth_b + depth_c * 0.75
     source_z = height_j + height_k * 0.5
@@ -156,15 +154,6 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     settings.batches = 200
     settings.inactive = 100
 
-    # plot = openmc.Plot()
-    # plot.origin = geometry.root_universe.bounding_box.center
-    # plot.width = geometry.root_universe.bounding_box.width
-    # plot.pixels = [1000, 1000, 1]
-    # plot.type = 'voxel'
-    # plot.id = 100
-
-    # plots = openmc.Plots([plot]) # <-- to put this back in add 'plots=plots' to the line below 
-
     ce_model = openmc.Model(geometry, materials_continuous_xs, settings)
 
     rr_model = copy.deepcopy(ce_model)
@@ -175,6 +164,8 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     )
 
     rr_model.convert_to_random_ray()
+
+    rr_model.settings.random_ray['volume_estimator'] = volume_estimator
 
     bbox = geometry.bounding_box
     ll   = np.array(bbox.lower_left)
@@ -199,45 +190,15 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
 
     rr_model.settings.random_ray['source_region_meshes'] = [(mesh, [rr_model.geometry.root_universe])]
 
-    # random_ray_wwg_statepoint = rr_model.run()
-
-    # def plot_random_ray_vtk(fname, title):
-
-    #     plt_mesh = pv.read(fname)
-    #     p = pv.Plotter(off_screen=True)
-    #     actor = p.add_mesh(plt_mesh, scalars="flux_group_0", cmap="bwr")
-    #     mapper = actor.GetMapper()
-    #     lut = mapper.GetLookupTable()
-    #     lut.SetScaleToLog10()
-    #     mapper.Update()
-    #     p.view_xy()
-    #     p.render()
-    #     p.add_title(title)
-
-    #     p.screenshot("output.png")
-    #     p.close()
-    #     display(Image("output.png"))
-
-    # plot_random_ray_vtk("plot_100.vtk", "Random Ray Forward Flux (Thermal)")
-
     rr_model.settings.weight_window_generators = openmc.WeightWindowGenerator(
         method='fw_cadis', mesh=mesh, energy_bounds=list(weight_window_edges), max_realizations=settings.batches
     )
 
     rr_model.run()
     
-    # plot_random_ray_vtk("plot_100.vtk", "Random Ray Adjoint Flux (Thermal)")
-
     subprocess.run(["ls", "-lh", "weight_windows.h5"])
 
     weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
-
-    # plt.imshow(
-    #         weight_windows[0].lower_ww_bounds.squeeze().T,
-    #         origin='lower', norm=LogNorm(), aspect=17.0 / 11.0
-    # )
-    # plt.title('lower_ww_bounds')
-    # plt.colorbar()
 
     subprocess.run(["cp", "weight_windows.h5", "ww_fw_cadis.h5"])
 
@@ -259,54 +220,6 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     statepoint_off = "labyrinth_statepoint_no_WW.h5"
     results_no_WW = summarize_labyrinth_statepoint(statepoint_off)
 
-    # def plot_mesh_tally(statepoint_filename, image_filename):
-
-    #     with openmc.StatePoint(statepoint_filename) as sp:
-    #         flux_tally = sp.get_tally(name="flux tally")
-
-    #     mesh_extent = flux_tally.find_filter(openmc.MeshFilter).mesh.bounding_box.extent['xy']
-
-    #     fig, axes = plt.subplots(1, 2, figsize=(12, 6), constrained_layout=True)
-
-    #     flux_mean = flux_tally.get_reshaped_data(value="mean", expand_dims=True).squeeze()
-    #     im1 = axes[0].imshow(
-    #         flux_mean[:, :].T,
-    #         origin="lower",
-    #         extent=mesh_extent,
-    #         norm=LogNorm(),
-    #         cmap="coolwarm"
-    #     )
-    #     axes[0].set_title("Flux")
-    #     cbar1 = fig.colorbar(im1, ax=axes[0])
-    #     cbar1.set_label("Flux")
-
-    #     flux_rel_err = flux_tally.get_reshaped_data(value="rel_err", expand_dims=True).squeeze()
-
-    #     invalid_mask = np.isnan(flux_rel_err) | (flux_rel_err == 0.0)
-    #     flux_rel_err = np.where(invalid_mask, 1.0, flux_rel_err)
-        
-    #     im2 = axes[1].imshow(
-    #         flux_rel_err[:, :].T,
-    #         origin="lower",
-    #         extent=mesh_extent,
-    #         norm=LogNorm(vmin=1e-3, vmax=1e0), 
-    #         cmap="coolwarm"
-    #     )
-    #     axes[1].set_title("Flux Rel Err")
-    #     cbar2 = fig.colorbar(im2, ax=axes[1])
-    #     cbar2.set_label("Flux Rel Err")
-
-    #     avg_rel_err = np.mean(flux_rel_err)
-    #     max_rel_err = np.max(flux_rel_err)
-    #     rms_rel_err = np.sqrt(np.mean(np.square(flux_rel_err)))
-    #     print(f"Average Relative Error: {avg_rel_err * 100.0:.6f}%")
-    #     print(f"Maximum Relative Error: {max_rel_err * 100.0:.6f}%")
-    #     print(f"RMS Relative Error: {rms_rel_err * 100.0:.6f}%")
-
-    #     plt.savefig(image_filename)
-
-    # plot_mesh_tally(statepoint_off, "no_fw_cadis.png")
-
     settings.weight_windows_on = True
     settings.particles = 30000 # 30000
     settings.batches = 15 # 15
@@ -317,8 +230,6 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     os.replace(sp_default, "labyrinth_statepoint_with_WW.h5")
     statepoint_on = "labyrinth_statepoint_with_WW.h5"
     results_with_WW = summarize_labyrinth_statepoint(statepoint_on)
-
-    # plot_mesh_tally(statepoint_on, "fw_cadis.png")
     
     os.chdir(orig_dir)
 

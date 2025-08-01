@@ -7,21 +7,22 @@ from JETSON_2D_Model.JETSON_2D             import run_JETSON_2D
 
 random_ray_edges = [0, 6.25e-1, 2e7]
 weight_window_edges = [0, 2e7]
-mesh_cell_size_cm = 4
+mesh_cell_size_cm = 10
 MGXS_correction = None # None or 'P0'
+volume_estimator = 'naive'
 
 problems = [
-    ("Labyrinth", run_labyrinth),
-    ("ITER_Cyl", run_ITER_cyl),
-    ("simple_tok", run_simple_tok),
-    ("proxima_fusion", run_proxima_fusion),
-    ("water_sphere", run_water_sph),
+    # ("Labyrinth", run_labyrinth),
+    # ("ITER_Cyl", run_ITER_cyl),
+    # ("simple_tok", run_simple_tok),
+    # ("proxima_fusion", run_proxima_fusion),
+    # ("water_sphere", run_water_sph),
     ("JETSON_2D", run_JETSON_2D),
 ]
 
 print()
 
-results = {name: fn(random_ray_edges, weight_window_edges, mesh_cell_size_cm, MGXS_correction) for name, fn in problems}
+results = {name: fn(random_ray_edges, weight_window_edges, mesh_cell_size_cm, MGXS_correction, volume_estimator) for name, fn in problems}
 for name, (WW, noWW) in results.items():
     label = name.lower()
     print(f"-- {label} FOM --")
