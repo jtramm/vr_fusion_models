@@ -6,7 +6,7 @@ import openmc
 def summarize_proxima_fusion_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
-    tally = sp.get_tally(id=2)
+    tally = sp.get_tally(name="flux_mesh_tally")
     means = tally.get_values(value='mean').ravel()
     sigmas = tally.get_values(value='std_dev').ravel()
     means_safe = np.where(means == 0.0, 1.0, means)
@@ -104,9 +104,9 @@ def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[
     random_ray_model = copy.deepcopy(model)
     random_ray_model.tallies = openmc.Tallies()
 
-    random_ray_model.settings.particles = 30000 # 30000
-    random_ray_model.settings.batches   = 100 # 100
-    random_ray_model.settings.inactive  = 50 # 50
+    random_ray_model.settings.particles = 20000
+    random_ray_model.settings.batches   = 200
+    random_ray_model.settings.inactive  = 100
 
     random_ray_model.convert_to_multigroup(
         method="stochastic_slab",
@@ -153,15 +153,15 @@ def run_proxima_fusion(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[
     model.settings.survival_biasing          = False
     model.settings.weight_windows            = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.particles = 100 # 20000
-    model.settings.batches   = 5 # 20
+    model.settings.particles = 20000
+    model.settings.batches   = 20
 
     model.settings.weight_windows_on = True
     sp_with = model.run(path='mc_with_ww.xml')
     results_with_WW = summarize_proxima_fusion_statepoint(sp_with)
 
-    model.settings.particles = 100 # 20000
-    model.settings.batches   = 5 # 20
+    model.settings.particles = 20000
+    model.settings.batches   = 20
     model.settings.weight_windows_on = False
     sp_no = model.run(path='mc_no_ww.xml')
     results_no_WW = summarize_proxima_fusion_statepoint(sp_no)

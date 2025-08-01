@@ -157,15 +157,15 @@ def run_water_sph(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     wws = openmc.hdf5_to_wws('weight_windows.h5')
     model.settings.weight_windows = wws
 
-    model.settings.particles = 100
-    model.settings.batches = 5
+    model.settings.particles = 10000
+    model.settings.batches = 20
     
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='with_WW.xml')
     result_with_WW = summarize_water_sph_statepoint(statepoint_name)
 
-    model.settings.particles = 200
-    model.settings.batches = 5
+    model.settings.particles = 20000
+    model.settings.batches = 40
 
     model.settings.weight_windows_on = False
     statepoint_name  = model.run(path='no_WW.xml')

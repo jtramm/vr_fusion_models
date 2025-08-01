@@ -257,8 +257,8 @@ def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
 
     settings = openmc.Settings()
     settings.source = source
-    settings.batches = 50
-    settings.particles = 4500
+    settings.batches = 200
+    settings.particles = 20000
     settings.run_mode = 'fixed source'
 
     extent_xy = 2.0 * ro
@@ -353,9 +353,9 @@ def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
 
     random_ray_model.settings.random_ray['source_region_meshes'] = [(mesh, [random_ray_model.geometry.root_universe])]
 
-    random_ray_model.settings.particles = 4500 # 4500
-    random_ray_model.settings.batches = 200 # 200
-    random_ray_model.settings.inactive = 100 # 100
+    random_ray_model.settings.particles = 20000
+    random_ray_model.settings.batches = 200
+    random_ray_model.settings.inactive = 100
     random_ray_model.settings.random_ray['distance_inactive'] = 4000
     random_ray_model.settings.random_ray['distance_active'] = 20000
     random_ray_model.settings.random_ray['ray_source'] = openmc.IndependentSource(space=openmc.stats.Box(
@@ -408,15 +408,15 @@ def run_JETSON_2D(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     model.settings.survival_biasing = False
     model.settings.weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.batches = 5 # 10
-    model.settings.particles = 100 # 60000
+    model.settings.batches = 100 # 10
+    model.settings.particles = 20000 # 60000
 
     model.settings.weight_windows_on = True
     sp_with = model.run(path="mc_with_ww.xml")
     results_with_WW = summarize_JETSON_2D_statepoint(sp_with)
 
-    model.settings.batches = 5 # 20
-    model.settings.particles = 100 # 150000
+    model.settings.batches = 100 # 20
+    model.settings.particles = 200000 # 150000
 
     model.settings.weight_windows_on = False
     sp_no = model.run(path="mc_no_ww.xml")

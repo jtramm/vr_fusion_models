@@ -152,9 +152,9 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     settings = openmc.Settings()
     settings.run_mode = "fixed source"
     settings.source = source
-    settings.particles = 80 # 80
-    settings.batches = 100 # 100
-    settings.inactive = 50 # 50
+    settings.particles = 20000
+    settings.batches = 200
+    settings.inactive = 100
 
     # plot = openmc.Plot()
     # plot.origin = geometry.root_universe.bounding_box.center
@@ -245,8 +245,8 @@ def run_labyrinth(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.
     settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     settings.survival_biasing = False
     settings.weight_windows = weight_windows
-    settings.particles = 65000 # 65000
-    settings.batches = 30 # 30
+    settings.particles = 65000
+    settings.batches = 30
     settings.source = source
     settings.run_mode = "fixed source"
 

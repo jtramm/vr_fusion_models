@@ -6,7 +6,7 @@ import numpy as np
 def summarize_simple_tok_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
-    tally = sp.get_tally(id=44)
+    tally = sp.get_tally(name="Neutron flux in PF coils")
     means = tally.get_values(value='mean').ravel()
     means_safe = np.where(means == 0, 1.0, means)
     sigmas = tally.get_values(value='std_dev').ravel()
@@ -106,9 +106,9 @@ def run_simple_tok(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6
     random_ray_model.settings.random_ray["distance_inactive"] = 1500.0
     random_ray_model.settings.random_ray["distance_active"] = 3000.0
     random_ray_model.settings.random_ray["sample_method"] = "prng"
-    random_ray_model.settings.particles = 30000 # 30000
-    random_ray_model.settings.batches   = 100 # 100
-    random_ray_model.settings.inactive  = 50 # 50
+    random_ray_model.settings.particles = 20000
+    random_ray_model.settings.batches   = 200
+    random_ray_model.settings.inactive  = 100
 
     wwg = openmc.WeightWindowGenerator(
         mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches)
@@ -137,15 +137,15 @@ def run_simple_tok(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6
                 flt.mesh.upper_right = ur
                 flt.mesh.dimension   = tuple(dims)
 
-    model.settings.particles = 10 # 10000
-    model.settings.batches   = 1 # 25
+    model.settings.particles = 10000
+    model.settings.batches   = 25
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path="mc.xml")
     results_with_WW = summarize_simple_tok_statepoint(statepoint_name)
 
-    model.settings.particles = 10 # 10000
-    model.settings.batches   = 1 # 50
+    model.settings.particles = 10000
+    model.settings.batches   = 50
 
     model.settings.weight_windows_on = False
     statepoint_name = model.run(path="mc.xml")

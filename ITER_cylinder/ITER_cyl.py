@@ -5,7 +5,7 @@ import numpy as np
 def summarize_ITER_cyl_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
     transport_time = sp.runtime['transport']
-    tally = sp.get_tally(id=1)
+    tally = sp.get_tally(name="tally_cells_n")
     means = tally.get_values(value='mean').ravel()
     means_safe = np.where(means == 0, 1.0, means)
     sigmas = tally.get_values(value='std_dev').ravel()
@@ -61,9 +61,9 @@ def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.2
     model.settings.random_ray["source_region_meshes"] = [(mesh, [model.geometry.root_universe])]
     model.settings.random_ray["distance_inactive"] = 1500.0
     model.settings.random_ray["distance_active"] = 3000.0
-    model.settings.particles = 10000 # 10000
-    model.settings.batches = 100 # 100
-    model.settings.inactive = 50 # 50
+    model.settings.particles = 20000
+    model.settings.batches = 200
+    model.settings.inactive = 100
 
     wwg = openmc.WeightWindowGenerator(
         mesh, method='fw_cadis', energy_bounds=list(weight_window_edges), max_realizations=model.settings.batches)
@@ -95,15 +95,15 @@ def run_ITER_cyl(random_ray_edges=[0, 6.25e-1, 2e7], weight_window_edges=[0, 6.2
                 flt.mesh.upper_right = ur
                 flt.mesh.dimension   = tuple(dims)
 
-    model.settings.particles = 100 # 100000
-    model.settings.batches = 5 # 35
+    model.settings.particles = 100000
+    model.settings.batches = 35
 
     model.settings.weight_windows_on = True
     statepoint_name = model.run(path='mc.xml')
     results_with_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
-    model.settings.particles = 100 # 100000
-    model.settings.batches = 20 # 70
+    model.settings.particles = 100000
+    model.settings.batches = 70
 
     model.settings.weight_windows_on = False
     statepoint_name = model.run(path='mc.xml')
