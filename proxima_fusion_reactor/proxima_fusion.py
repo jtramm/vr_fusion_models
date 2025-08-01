@@ -110,7 +110,7 @@ def run_proxima_fusion(
     random_ray_model.settings.inactive  = 100
     random_ray_model.convert_to_multigroup(
         method="stochastic_slab",
-        nparticles=10000, # 10000
+        nparticles=10000,
         groups=random_ray_groups,
         correction=MGXS_correction,
     )
