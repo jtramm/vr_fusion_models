@@ -2,7 +2,6 @@ import os
 import copy
 import openmc
 import numpy as np
-import matplotlib.pyplot as plt
 
 def summarize_JETSON_2D_statepoint(sp_path):
     sp = openmc.StatePoint(sp_path)
@@ -245,12 +244,6 @@ def run_JETSON_2D(
     root_universe = openmc.Universe(cells=cells)
     geometry = openmc.Geometry(root_universe)
 
-    plot = geometry.plot(basis='xy', color_by='material')
-    fig = plot.figure
-    out = os.path.join(SCRIPT_DIR, 'geometry_xy.png')
-    fig.savefig(out, bbox_inches='tight')
-    plt.close(fig)
-
     source = openmc.IndependentSource()
     source.space = openmc.stats.Box(
         lower_left=[-R0_plasma, -R0_plasma, -R0_plasma], upper_right=[R0_plasma, R0_plasma, R0_plasma], only_fissionable=False
@@ -282,77 +275,12 @@ def run_JETSON_2D(
 
     model = openmc.Model(geometry=geometry, materials=mats, settings=settings, tallies=tallies)
 
-    statepoint_analog = model.run()
-
-    def plot_flux(statepoint_fname, title):
-        sp = openmc.StatePoint(statepoint_fname)
-        tally = sp.get_tally(name="mesh_flux")
-        flux = tally.get_slice(scores=['flux'])
-        flux.mean.shape = (dim, dim)
-        flux.mean[flux.mean == 0] = np.nan
-
-        fig = plt.figure(figsize=(8, 8))
-        plt.imshow(np.log10(flux.mean), origin='lower',
-                extent=(-ro, ro, -ro, ro), cmap='coolwarm')
-        plt.colorbar(label='Log10 Neutron Flux (1/cm²/s)')
-        plt.title(title)
-        plt.xlabel('X (cm)')
-        plt.ylabel('Y (cm)')
-
-        filename = title.lower().replace(' ', '_') + '.png'
-        outpath = os.path.join(SCRIPT_DIR, filename)
-        fig.savefig(outpath, bbox_inches='tight')
-        plt.close(fig)
-
-        sp.close()
-
-    def compute_avg_rel_error(statepoint_fname):
-        sp = openmc.StatePoint(statepoint_fname)
-        tally = sp.get_tally(name="mesh_flux")
-        flux = tally.get_slice(scores=['flux'])
-        rel_err = flux.get_values(value='rel_err')
-        rel_err = np.nan_to_num(rel_err, nan=1.0, posinf=1.0, neginf=1.0)
-        avg = np.mean(rel_err) * 100.0
-        max = np.max(rel_err) * 100.0
-        print(f"Average Relative Error: {avg:.5f}%")
-        print(f"Maximum Relative Error: {max:.5f}%")
-        unhit_cells = np.sum(rel_err == 1.00)
-        total_cells = rel_err.size
-        unhit_cells_percentage = 100.0 - ((unhit_cells / total_cells) * 100.0)
-        print(f"Percentage of cells with tallies: {unhit_cells_percentage:.5f}%")
-        sp.close()
-
-    plot_flux(statepoint_analog, 'No Variance Reduction')
-
-    compute_avg_rel_error(statepoint_analog)
-
     random_ray_model = copy.deepcopy(model)
 
-    # group_edges = np.array([1e-11, 5.8e-8, 1.4e-7, 2.8e-7, 6.25e-7, 4e-6, 5.53e-3, 1.93e-1, 1.0e1]) * 1e6
-
-    # ECCO_33 = [
-    #     1.96E+01, 1.00E+01, 6.07E+00, 3.68E+00, 2.23E+00, 1.35E+00,
-    #     8.21E-01, 4.98E-01, 3.02E-01, 1.83E-01, 1.11E-01, 6.74E-02,
-    #     4.09E-02, 2.48E-02, 1.50E-02, 9.12E-03, 5.53E-03, 3.35E-03,
-    #     2.03E-03, 1.23E-03, 7.49E-04, 4.54E-04, 3.04E-04, 1.49E-04,
-    #     9.17E-05, 6.79E-05, 4.02E-05, 2.26E-05, 1.37E-05, 8.32E-06,
-    #     4.00E-06, 5.40E-07, 1.00E-07, 1.00E-11
-    # ]
-
-    # ECCO_33.reverse()
-
-    # ECCO_33 = [x * 1e6 for x in ECCO_33]
-
-
-    # group_edges = ECCO_33
-
     random_ray_model.convert_to_multigroup(method='stochastic_slab',
-                                        nparticles=100000, #100000
+                                        nparticles=100000,
                                         groups=random_ray_groups,
                                         correction=MGXS_correction,
-                                        # groups=openmc.mgxs.EnergyGroups(group_edges),
-                                        # overwrite_mgxs_library=True,
-                                        # correction=None
     )
 
     random_ray_model.convert_to_random_ray()
@@ -373,66 +301,29 @@ def run_JETSON_2D(
 
     wwg = openmc.WeightWindowGenerator(
         method='fw_cadis', mesh=mesh, energy_bounds=list(weight_window_edges), max_realizations=random_ray_model.settings.batches,
-        # energy_bounds=openmc.mgxs.EnergyGroups(group_edges).group_edges,
     )
 
     random_ray_model.settings.weight_window_generators = wwg
 
-    statepoint_rr = random_ray_model.run()
+    random_ray_model.run()
 
-    plot_flux(statepoint_rr, 'Random Ray Adjoint Flux')
-
-    weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
-    lower = weight_windows[0].lower_ww_bounds
-    ww = lower.reshape(dim, dim, len(list(weight_window_edges))-1)
-
-    fig = plt.figure(figsize=(8, 8))
-    plt.imshow(np.log10(ww[:, :, 0]), origin='lower',
-            extent=(-ro, ro, -ro, ro), cmap='coolwarm')
-    plt.colorbar(label='Log10 Weight Window Lower Bounds')
-    plt.title('Thermal Group Weight Windows in XY Plane at Z=0')
-    plt.xlabel('X (cm)')
-    plt.ylabel('Y (cm)')
-
-    out = os.path.join(SCRIPT_DIR, 'ww_thermal_slice.png')
-    fig.savefig(out, bbox_inches='tight')
-    plt.close(fig)
-
-    fig = plt.figure(figsize=(8, 8))
-    plt.imshow(np.log10(ww[:, :, len(list(weight_window_edges))-2]), origin='lower',
-            extent=(-ro, ro, -ro, ro), cmap='coolwarm')
-    plt.colorbar(label='Log10 Weight Window Lower Bounds')
-    plt.title('Fast Group Weight Windows in XY Plane at Z=0')
-    plt.xlabel('X (cm)')
-    plt.ylabel('Y (cm)')
-
-    out = os.path.join(SCRIPT_DIR, 'ww_fast_slice.png')
-    fig.savefig(out, bbox_inches='tight')
-    plt.close(fig)
+    openmc.hdf5_to_wws('weight_windows.h5')
 
     model.settings.weight_window_checkpoints = {'collision': True, 'surface': True}
     model.settings.survival_biasing = False
     model.settings.weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
 
-    model.settings.batches = 100 # 10
-    model.settings.particles = 20000 # 60000
-
+    model.settings.batches = 100
+    model.settings.particles = 20000
     model.settings.weight_windows_on = True
     sp_with = model.run(path="mc_with_ww.xml")
     results_with_WW = summarize_JETSON_2D_statepoint(sp_with)
 
-    model.settings.batches = 100 # 20
-    model.settings.particles = 200000 # 150000
-
+    model.settings.batches = 100
+    model.settings.particles = 200000
     model.settings.weight_windows_on = False
     sp_no = model.run(path="mc_no_ww.xml")
     results_no_WW = summarize_JETSON_2D_statepoint(sp_no)
-
-    statepoint_fw_cadis = model.run()
-
-    plot_flux(statepoint_fw_cadis, 'With Variance Reduction')
-
-    compute_avg_rel_error(statepoint_fw_cadis)
 
     os.chdir(orig_dir)
 
