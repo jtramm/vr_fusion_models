@@ -221,8 +221,8 @@ def run_labyrinth(
     results_no_WW = summarize_labyrinth_statepoint(statepoint_off)
 
     settings.weight_windows_on = True
-    settings.particles = 30000 # 30000
-    settings.batches = 15 # 15
+    settings.particles = 30000
+    settings.batches = 15
     weight_windows = openmc.hdf5_to_wws('ww_fw_cadis.h5')
     settings.weight_windows = weight_windows
     simulation_using_ww_on = openmc.Model(geometry, materials_continuous_xs, settings, tallies)
