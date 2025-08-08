@@ -30,7 +30,14 @@ def run_ITER_cyl(
         MGXS_correction=None, 
         volume_estimator='naive',
     ): 
- 
+
+    print("\n" + "="*40)
+    message = ">>> SIMULATING ITER_cyl <<<"
+    for code in [196, 208, 226, 46, 21, 93, 201]:
+        print(f"\033[1;38;5;{code}m{message}\033[0m") 
+    print("="*40 + "\n")
+    print()
+
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)

@@ -33,6 +33,13 @@ def run_proxima_fusion(
         volume_estimator='naive',
     ):
 
+    print("\n" + "="*40)
+    message = ">>> SIMULATING proxima_fusion <<<"
+    for code in [196, 208, 226, 46, 21, 93, 201]:
+        print(f"\033[1;38;5;{code}m{message}\033[0m") 
+    print("="*40 + "\n")
+    print()
+
     mesh_file = 'dagmc_surface_mesh.h5m'
 
     orig_dir = os.getcwd()
