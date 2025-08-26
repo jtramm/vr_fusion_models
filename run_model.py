@@ -15,8 +15,8 @@ volume_estimator = 'naive'
 
 problems = [
     #("Labyrinth", run_labyrinth),
-    #("ITER_Cyl", run_ITER_cyl),
-    ("simple_tok", run_simple_tok),
+    ("ITER_Cyl", run_ITER_cyl),
+    #("simple_tok", run_simple_tok),
     #("proxima_fusion", run_proxima_fusion),
     #("water_sphere", run_water_sph),
     #("JETSON_2D", run_JETSON_2D),
