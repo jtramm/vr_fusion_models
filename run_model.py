@@ -4,20 +4,22 @@ from water_sphere.water_sph                import run_water_sph
 from simple_tokamak.simple_tok             import run_simple_tok
 from proxima_fusion_reactor.proxima_fusion import run_proxima_fusion
 from JETSON_2D_Model.JETSON_2D             import run_JETSON_2D
+import openmc
 
-random_ray_edges = [0, 6.25e-1, 2e7]
-weight_window_edges = [0, 2e7]
+random_ray_edges = openmc.mgxs.GROUP_STRUCTURES['CASMO-4']
+#weight_window_edges = random_ray_edges
+weight_window_edges = None
 mesh_cell_size_cm = 10
 MGXS_correction = None
 volume_estimator = 'naive'
 
 problems = [
-    ("Labyrinth", run_labyrinth),
-    ("ITER_Cyl", run_ITER_cyl),
+    #("Labyrinth", run_labyrinth),
+    #("ITER_Cyl", run_ITER_cyl),
     ("simple_tok", run_simple_tok),
-    ("proxima_fusion", run_proxima_fusion),
-    ("water_sphere", run_water_sph),
-    ("JETSON_2D", run_JETSON_2D),
+    #("proxima_fusion", run_proxima_fusion),
+    #("water_sphere", run_water_sph),
+    #("JETSON_2D", run_JETSON_2D),
 ]
 
 print()
@@ -28,8 +30,8 @@ for name, (WW, noWW) in results.items():
     print(f"-- {label} FOM --")
     for mode, res in (("with_WW", WW), ("no_WW", noWW)):
         print(f"{mode} -------------------------------")
-        print(f"  Avg σ       : {res['avg_rel_sigma']:.3e}")
-        print(f"  Max σ       : {res['max_rel_sigma']:.3e}")
-        print(f"  Transport T.: {res['transport_time']:.3f} s")
-        print(f"  1 / σ²T      : {res['figure_of_merit']:.3e}")
+        print(f"  Avg σ        : {res['avg_rel_sigma']:.3e}")
+        print(f"  Max σ        : {res['max_rel_sigma']:.3e}")
+        print(f"  Transport T. : {res['transport_time']:.3f} s")
+        print(f"  Zero Frac    : {res['zero_percentage']/100.0:.3e}")
         print()

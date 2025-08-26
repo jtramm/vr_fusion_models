@@ -4,6 +4,34 @@ import openmc
 import copy
 import subprocess
 
+def autotune_for_time(model, starting_particles=10000, target_runtime=30.0):
+    def get_runtime(sp_path):
+        sp = openmc.StatePoint(sp_path)
+        runtime = sp.runtime['transport']
+        sp.close()
+        return runtime
+    
+    model.settings.batches = 25
+    model.settings.particles = starting_particles
+
+    for i in range(5):
+
+        sp_name = model.run()
+        runtime = get_runtime(sp_name)
+
+        if runtime < target_runtime * 0.9 or runtime > target_runtime * 1.1:
+
+            # Repeat again to get runtime close to target, if not within 10% of target.
+            particles = model.settings.particles  * target_runtime / runtime
+                        
+            print(f"Adjusting particles from {model.settings.particles} to {particles:.0f} to achieve target runtime.")
+            model.settings.particles = int(particles)
+
+        else:
+            break
+
+    return sp_name
+
 def run_labyrinth(
         random_ray_edges=[0, 6.25e-1, 2e7], 
         weight_window_edges=[0, 6.25e-1, 2e7], 
@@ -22,9 +50,6 @@ def run_labyrinth(
     orig_dir = os.getcwd()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     os.chdir(SCRIPT_DIR)
-    
-    if os.path.exists("mgxs.h5"):
-        os.remove("mgxs.h5")
 
     random_ray_groups = openmc.mgxs.EnergyGroups(list(random_ray_edges))
 
@@ -65,8 +90,6 @@ def run_labyrinth(
     depth_f = 100
 
     height_j = 100
-    height_k = 500
-    height_l = 100
 
     xplane_0 = openmc.XPlane(x0=0, boundary_type="vacuum")
     xplane_1 = openmc.XPlane(x0=xplane_0.x0 + width_a)
@@ -85,27 +108,23 @@ def run_labyrinth(
     yplane_5 = openmc.YPlane(y0=yplane_4.y0 + depth_e)
     yplane_6 = openmc.YPlane(y0=yplane_5.y0 + depth_f, boundary_type="vacuum")
 
-    zplane_1 = openmc.ZPlane(z0=0, boundary_type="vacuum")
-    zplane_2 = openmc.ZPlane(z0=zplane_1.z0 + height_j)
-    zplane_3 = openmc.ZPlane(z0=zplane_2.z0 + height_k)
-    zplane_4 = openmc.ZPlane(z0=zplane_3.z0 + height_l, boundary_type="vacuum")
+    zplane_1 = openmc.ZPlane(z0=0, boundary_type="reflective")
+    zplane_2 = openmc.ZPlane(z0=height_j, boundary_type="reflective")
 
-    outside_left_region = +xplane_0 & -xplane_1 & +yplane_1 & -yplane_5 & +zplane_1 & -zplane_4
-    wall_left_region = +xplane_1 & -xplane_2 & +yplane_2 & -yplane_4 & +zplane_2 & -zplane_3
-    wall_right_region = +xplane_5 & -xplane_6 & +yplane_2 & -yplane_5 & +zplane_2 & -zplane_3
-    wall_top_region = +xplane_1 & -xplane_4 & +yplane_4 & -yplane_5 & +zplane_2 & -zplane_3
-    outside_top_region = +xplane_0 & -xplane_7 & +yplane_5 & -yplane_6 & +zplane_1 & -zplane_4
-    wall_bottom_region = +xplane_1 & -xplane_6 & +yplane_1 & -yplane_2 & +zplane_2 & -zplane_3
-    outside_bottom_region = +xplane_0 & -xplane_7 & +yplane_0 & -yplane_1 & +zplane_1 & -zplane_4
-    wall_middle_region = +xplane_3 & -xplane_4 & +yplane_3 & -yplane_4 & +zplane_2 & -zplane_3
-    outside_right_region = +xplane_6 & -xplane_7 & +yplane_1 & -yplane_5 & +zplane_1 & -zplane_4
 
-    room_region = +xplane_2 & -xplane_3 & +yplane_2 & -yplane_4 & +zplane_2 & -zplane_3
-    gap_region = +xplane_3 & -xplane_4 & +yplane_2 & -yplane_3 & +zplane_2 & -zplane_3
-    corridor_region = +xplane_4 & -xplane_5 & +yplane_2 & -yplane_5 & +zplane_2 & -zplane_3
+    outside_left_region = +xplane_0 & -xplane_1 & +yplane_1 & -yplane_5 & +zplane_1 & -zplane_2
+    wall_left_region = +xplane_1 & -xplane_2 & +yplane_2 & -yplane_4 & +zplane_1 & -zplane_2
+    wall_right_region = +xplane_5 & -xplane_6 & +yplane_2 & -yplane_5 & +zplane_1 & -zplane_2
+    wall_top_region = +xplane_1 & -xplane_4 & +yplane_4 & -yplane_5 & +zplane_1 & -zplane_2
+    outside_top_region = +xplane_0 & -xplane_7 & +yplane_5 & -yplane_6 & +zplane_1 & -zplane_2
+    wall_bottom_region = +xplane_1 & -xplane_6 & +yplane_1 & -yplane_2 & +zplane_1 & -zplane_2
+    outside_bottom_region = +xplane_0 & -xplane_7 & +yplane_0 & -yplane_1 & +zplane_1 & -zplane_2
+    wall_middle_region = +xplane_3 & -xplane_4 & +yplane_3 & -yplane_4 & +zplane_1 & -zplane_2
+    outside_right_region = +xplane_6 & -xplane_7 & +yplane_1 & -yplane_5 & +zplane_1 & -zplane_2
 
-    roof_region = +xplane_1 & -xplane_6 & +yplane_1 & -yplane_5 & +zplane_1 & -zplane_2
-    floor_region = +xplane_1 & -xplane_6 & +yplane_1 & -yplane_5 & +zplane_3 & -zplane_4
+    room_region = +xplane_2 & -xplane_3 & +yplane_2 & -yplane_4 & +zplane_1 & -zplane_2
+    gap_region = +xplane_3 & -xplane_4 & +yplane_2 & -yplane_3 & +zplane_1 & -zplane_2
+    corridor_region = +xplane_4 & -xplane_5 & +yplane_2 & -yplane_5 & +zplane_1 & -zplane_2
 
     outside_left_cell = openmc.Cell(region=outside_left_region, fill=mat_air)
     outside_right_cell = openmc.Cell(region=outside_right_region, fill=mat_air)
@@ -119,9 +138,6 @@ def run_labyrinth(
     room_cell = openmc.Cell(region=room_region, fill=mat_air)
     gap_cell = openmc.Cell(region=gap_region, fill=mat_air)
     corridor_cell = openmc.Cell(region=corridor_region, fill=mat_air)
-
-    roof_cell = openmc.Cell(region=roof_region, fill=mat_concrete)
-    floor_cell = openmc.Cell(region=floor_region, fill=mat_concrete)
 
     geometry = openmc.Geometry(
         [
@@ -137,19 +153,16 @@ def run_labyrinth(
             room_cell,
             gap_cell,
             corridor_cell,
-            roof_cell,
-            floor_cell,
         ]
     )
 
-    source_x = width_a + width_b + width_c * 0.5
-    source_y = depth_a + depth_b + depth_c * 0.75
-    source_z = height_j + height_k * 0.5
+    source_x = width_a + width_b + width_c * 0.5 + 1e-6
+    source_y = depth_a + depth_b + depth_c * 0.75 + 1e-6
+    source_z = height_j * 0.5 + 1e-6
     space = openmc.stats.Point((source_x, source_y, source_z))
 
     source = openmc.IndependentSource(
         space=space,
-        angle=openmc.stats.Isotropic(),
         energy=openmc.stats.Discrete([2.5e6], [1.0]),
         particle="neutron"
     )
@@ -165,18 +178,22 @@ def run_labyrinth(
 
     rr_model = copy.deepcopy(ce_model)
     rr_model.convert_to_multigroup(
-        method="material_wise", 
+        method="stochastic_slab", 
         groups=random_ray_groups,
         correction=MGXS_correction,
+        source_energy=source.energy.x[0],
+        overwrite_mgxs_library=True
     )
 
     rr_model.convert_to_random_ray()
 
-    rr_model.settings.random_ray['volume_estimator'] = volume_estimator
-
     bbox = geometry.bounding_box
     ll   = np.array(bbox.lower_left)
     ur   = np.array(bbox.upper_right)
+    print("lower left:")
+    print(ll)
+    print("upper right:")
+    print(ur)
 
     extent = ur - ll
     nx = max(1, int(np.ceil(extent[0] / mesh_cell_size_cm)))
@@ -187,6 +204,7 @@ def run_labyrinth(
     mesh.lower_left  = ll
     mesh.upper_right = ur
     mesh.dimension   = (nx, ny, nz)
+    print("Mesh dimensions: x, y, z:", mesh.dimension)
 
     mesh_filter = openmc.MeshFilter(mesh)
     flux_tally = openmc.Tally(name="flux tally")
@@ -196,18 +214,20 @@ def run_labyrinth(
     tallies = openmc.Tallies([flux_tally])
 
     rr_model.settings.random_ray['source_region_meshes'] = [(mesh, [rr_model.geometry.root_universe])]
+    rr_model.settings.particles = 5000
+    rr_model.settings.batches = 200
+    rr_model.settings.inactive = 100
+    rr_model.settings.random_ray['source_shape'] = 'flat'
+    rr_model.settings.random_ray['sample_method'] = 'halton'
+    rr_model.settings.random_ray['volume_estimator'] = volume_estimator
 
     rr_model.settings.weight_window_generators = openmc.WeightWindowGenerator(
-        method='fw_cadis', mesh=mesh, energy_bounds=list(weight_window_edges), max_realizations=settings.batches
+        method='fw_cadis', mesh=mesh, energy_bounds=weight_window_edges, max_realizations=settings.batches
     )
 
     rr_model.run()
-    
-    subprocess.run(["ls", "-lh", "weight_windows.h5"])
 
     weight_windows = openmc.hdf5_to_wws('weight_windows.h5')
-
-    subprocess.run(["cp", "weight_windows.h5", "ww_fw_cadis.h5"])
 
     settings = openmc.Settings()
     settings.weight_window_checkpoints = {'collision': True, 'surface': True}
@@ -222,10 +242,9 @@ def run_labyrinth(
 
     settings.weight_windows_on = False
     simulation_using_ww_off = openmc.Model(geometry, materials_continuous_xs, settings, tallies)
-    sp_default = simulation_using_ww_off.run()
-    os.replace(sp_default, "labyrinth_statepoint_no_WW.h5")
-    statepoint_off = "labyrinth_statepoint_no_WW.h5"
-    results_no_WW = summarize_labyrinth_statepoint(statepoint_off)
+    sp_default = autotune_for_time(simulation_using_ww_off)
+
+    results_no_WW = summarize_labyrinth_statepoint(sp_default)
 
     settings.weight_windows_on = True
     settings.particles = 30000
@@ -233,11 +252,9 @@ def run_labyrinth(
     weight_windows = openmc.hdf5_to_wws('ww_fw_cadis.h5')
     settings.weight_windows = weight_windows
     simulation_using_ww_on = openmc.Model(geometry, materials_continuous_xs, settings, tallies)
-    sp_default = simulation_using_ww_on.run()
-    os.replace(sp_default, "labyrinth_statepoint_with_WW.h5")
-    statepoint_on = "labyrinth_statepoint_with_WW.h5"
-    results_with_WW = summarize_labyrinth_statepoint(statepoint_on)
-    
+    sp_default = autotune_for_time(simulation_using_ww_on)
+    results_with_WW = summarize_labyrinth_statepoint(sp_default)
+
     os.chdir(orig_dir)
 
     return results_with_WW, results_no_WW
@@ -260,6 +277,8 @@ def summarize_labyrinth_statepoint(sp_path):
     results['avg_rel_sigma'] = avg_rel_sigma
     results['max_rel_sigma'] = max_rel_sigma
     results['figure_of_merit'] = figure_of_merit
+    results['zero_percentage'] = (1.0 * np.sum(means == 0)) / len(means) * 100.0
+
 
     return results
 
