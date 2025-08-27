@@ -175,18 +175,11 @@ def run_simple_tok(
         mesh, method='fw_cadis', energy_bounds=weight_window_edges, max_realizations=random_ray_model.settings.batches)
     random_ray_model.settings.weight_window_generators = [wwg]
 
-    #random_ray_model.run(path="random_ray.xml")
+    random_ray_model.run(path="random_ray.xml")
 
     model.settings.weight_window_checkpoints = {"collision": True, "surface"  : True}
     model.settings.survival_biasing = False
     model.settings.weight_windows = openmc.hdf5_to_wws("weight_windows.h5")
-
-    for tally in model.tallies:
-        for flt in tally.filters:
-            if isinstance(flt, openmc.MeshFilter):
-                flt.mesh.lower_left  = ll
-                flt.mesh.upper_right = ur
-                flt.mesh.dimension   = tuple(dims)
 
     model.settings.particles = 10000
     model.settings.batches   = 25

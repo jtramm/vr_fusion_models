@@ -14,12 +14,12 @@ MGXS_correction = None
 volume_estimator = 'naive'
 
 problems = [
-    #("Labyrinth", run_labyrinth),
+    ("Labyrinth", run_labyrinth),
     ("ITER_Cyl", run_ITER_cyl),
-    #("simple_tok", run_simple_tok),
+    ("simple_tok", run_simple_tok),
     #("proxima_fusion", run_proxima_fusion),
     #("water_sphere", run_water_sph),
-    #("JETSON_2D", run_JETSON_2D),
+    ("JETSON_2D", run_JETSON_2D),
 ]
 
 print()

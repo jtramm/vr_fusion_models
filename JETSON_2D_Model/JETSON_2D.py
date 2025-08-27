@@ -358,7 +358,7 @@ def run_JETSON_2D(
 
     random_ray_model.settings.weight_window_generators = wwg
 
-    #random_ray_model.run()
+    random_ray_model.run()
 
     openmc.hdf5_to_wws('weight_windows.h5')
 
