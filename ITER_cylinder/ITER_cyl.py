@@ -3,7 +3,7 @@ import openmc
 import numpy as np
 
 
-def autotune_for_time(model, starting_particles=10000, target_runtime=30.0):
+def autotune_for_time(model, starting_particles=100, target_runtime=30.0):
     def get_runtime(sp_path):
         sp = openmc.StatePoint(sp_path)
         runtime = sp.runtime['transport']
@@ -123,13 +123,13 @@ def run_ITER_cyl(
     model.settings.particles = 100000
     model.settings.batches = 35
     model.settings.weight_windows_on = True
-    statepoint_name = autotune_for_time(model)
+    statepoint_name = autotune_for_time(model,starting_particles=100)
     results_with_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
     model.settings.particles = 100000
     model.settings.batches = 70
     model.settings.weight_windows_on = False
-    statepoint_name = autotune_for_time(model)
+    statepoint_name = autotune_for_time(model,starting_particles=100)
     results_no_WW = summarize_ITER_cyl_statepoint(statepoint_name)
 
     os.chdir(orig_dir)

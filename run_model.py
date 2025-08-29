@@ -6,7 +6,9 @@ from proxima_fusion_reactor.proxima_fusion import run_proxima_fusion
 from JETSON_2D_Model.JETSON_2D             import run_JETSON_2D
 import openmc
 
-random_ray_edges = openmc.mgxs.GROUP_STRUCTURES['CASMO-4']
+#random_ray_edges = openmc.mgxs.GROUP_STRUCTURES['CASMO-4']
+random_ray_edges = openmc.mgxs.GROUP_STRUCTURES['VITAMIN-J-175']
+
 #weight_window_edges = random_ray_edges
 weight_window_edges = None
 mesh_cell_size_cm = 10
